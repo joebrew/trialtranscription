@@ -1,0 +1,288 @@
+---
+layout: default
+---
+
+<!-- LANGUAGE SUFFIX VARIABLE -->
+{% capture language_suffix %}.{{ page.category }}{% endcapture %}
+
+
+<!-- Post Header -->
+<header class="intro-header" style="background-image: url('{{ site.baseurl }}/{% if page.header-img %}{{ page.header-img }}{% else %}{{ site.header-img }}{% endif %}')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>{{ page.title }}</h1>
+                    {% if page.subtitle %}
+                    <h2 class="subheading">{{ page.subtitle }}</h2>
+                    {% endif %}
+                    <span class="meta">Posted by {% if page.author %}{{ page.author }}{% else %}{{ site.title }}{% endif %} on {{ page.date | date: "%B %-d, %Y" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="column">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+
+                <!-- Joes language header -->
+
+                <!-- CATALAN -->
+                {% if page.category == "ca" %}
+                <div class="row" align="center">
+                    <div class="column">
+                        <a href="{{page.url | prepend: site.baseurl | replace_first: page.category, "en" | replace: language_suffix, ".en"}}"> <img src="{{ site.baseurl }}/img/banderes/en.png" alt="" align='left' style='float:left' height="50" width="50">
+                        </a> 
+                        <span class="caption text-muted" align='left' style='float:left'><a href="{{page.url | prepend: site.baseurl | replace_first: page.category, "en" | replace: language_suffix, ".en"}}">This post in English</a></span>
+                    </div>
+                    <div class="column">
+                        <a href="{{page.url | prepend: site.baseurl | replace_first: page.category, "es" | replace: language_suffix, ".es"}}">
+                        <img src="{{ site.baseurl }}/img/banderes/es.png" alt="" align='right' style='float:right' height="50" width="50">
+                        </a>
+                        <span class="caption text-muted" align='right' style='float:right'><a href="{{page.url | prepend: site.baseurl | replace_first: page.category, "es" | replace: language_suffix, ".es"}}">Este post en español</a></span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ENGLISH -->
+                {% if page.category == "en" %}
+                <div class="row" align="center">
+                    <div class="column">
+                        <a href="{{page.url | prepend: site.baseurl | replace_first: page.category, "ca" | replace: language_suffix, ".ca"}}"> <img src="{{ site.baseurl }}/img/banderes/ca.png" alt="" align='left' style='float:left' height="50" width="50">
+                        </a> 
+                        <span class="caption text-muted" align='left' style='float:left'><a href="{{page.url | prepend: site.baseurl | replace_first: page.category, "ca" | replace: language_suffix, ".ca"}}">Aquest post en català</a></span>
+                    </div>
+                    <div class="column">
+                        <a href="{{page.url | prepend: site.baseurl | replace_first: page.category, "es" | replace: language_suffix, ".es"}}">
+                        <img src="{{ site.baseurl }}/img/banderes/es.png" alt="" align='right' style='float:right' height="50" width="50">
+                        </a>
+                        <span class="caption text-muted" align='right' style='float:right'><a href="{{page.url | prepend: site.baseurl | replace_first: page.category, "es" | replace: language_suffix, ".es"}}">Este post en español</a></span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- SPANISH -->
+                {% if page.category == "es" %}
+                <div class="row" align="center">
+                    <div class="column">
+                        <a href="{{page.url | prepend: site.baseurl | replace_first: page.category, "ca" | replace: language_suffix, ".ca"}}"> <img src="{{ site.baseurl }}/img/banderes/ca.png" alt="" align='left' style='float:left' height="50" width="50">
+                        </a> 
+                        <span class="caption text-muted" align='left' style='float:left'><a href="{{page.url | prepend: site.baseurl | replace_first: page.category, "ca" | replace: language_suffix, ".ca"}}">Aquest post en català</a></span>
+                    </div>
+                    <div class="column">
+                        <a href="{{page.url | prepend: site.baseurl | replace_first: page.category, "en" | replace: language_suffix, ".en"}}">
+                        <img src="{{ site.baseurl }}/img/banderes/en.png" alt="" align='right' style='float:right' height="50" width="50">
+                        </a>
+                        <span class="caption text-muted" align='right' style='float:right'><a href="{{page.url | prepend: site.baseurl | replace_first: page.category, "en" | replace: language_suffix, ".en"}}">This post in English</a></span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ACTUAL BLOG POST / CONTENT -->
+                {{ content }}
+                <hr>
+                <br>
+                <hr>
+
+                <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+                <!-- responsive 2 -->
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-7902219614622730"
+                     data-ad-slot="9152995208"
+                     data-ad-format="auto"></ins>
+                <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+
+                <br>
+                <hr>
+
+                <!-- LANGUAGE SPECIFIC FORWARD/NEXT MENU -->
+
+                <!--espanol-->
+                {% if page.category == "es" %}
+                    {% assign previous = "Anterior" %}
+                    {% assign next = "Siguiente" %}
+
+                    <ul class="pager">
+
+                    {% assign before = false %}
+                    {% for post in site.categories.es %}
+                    {% if post.date < page.date %}
+                    {% if before == false %}
+                    {% assign before = true %}
+                    <li class="previous">
+                        <a href="{{ site.baseurl }}{{post.url}}" data-toggle="tooltip" data-placement="top" title="{{post.title}}">&larr; {{previous}}</a>
+                    </li>                
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+
+                    {% assign after = false %}
+                    {% for post in site.categories.es reversed %}
+                    {% if post.date > page.date %}
+                    {% if after == false %}
+                    {% assign after = true %}
+                    <li class="next">
+                    <a href="{{ site.baseurl }}{{post.url}}" data-toggle="tooltip" data-placement="top" title="{{post.title}}">{{next}} &rarr;</a>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                <!--catalan-->
+                {% if page.category == "ca" %}
+                    {% assign previous = "Anterior" %}
+                    {% assign next = "Següent" %}
+
+                    <ul class="pager">
+
+                    {% assign before = false %}
+                    {% for post in site.categories.ca %}
+                    {% if post.date < page.date %}
+                    {% if before == false %}
+                    {% assign before = true %}
+                    <li class="previous">
+                        <a href="{{ site.baseurl }}{{post.url}}" data-toggle="tooltip" data-placement="top" title="{{post.title}}">&larr; {{previous}}</a>
+                    </li>                
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% assign after = false %}
+                    {% for post in site.categories.ca reversed %}
+                    {% if post.date > page.date %}
+                    {% if after == false %}
+                    {% assign after = true %}
+                    <li class="next">
+                    <a href="{{ site.baseurl }}{{post.url}}" data-toggle="tooltip" data-placement="top" title="{{post.title}}">{{next}} &rarr;</a>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+
+                {% endif %}
+
+                <!--english-->
+                {% if page.category == "en" %}
+                    {% assign previous = "Previous" %}
+                    {% assign next = "Next" %}
+
+                    <ul class="pager">
+
+                    {% assign before = false %}
+                    {% for post in site.categories.en %}
+                    {% if post.date < page.date %}
+                    {% if before == false %}
+                    {% assign before = true %}
+                    <li class="previous">
+                        <a href="{{ site.baseurl }}{{post.url}}" data-toggle="tooltip" data-placement="top" title="{{post.title}}">&larr; {{previous}}</a>
+                    </li>                
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% assign after = false %}
+                    {% for post in site.categories.en reversed %}
+                    {% if post.date > page.date %}
+                    {% if after == false %}
+                    {% assign after = true %}
+                    <li class="next">
+                    <a href="{{ site.baseurl }}{{post.url}}" data-toggle="tooltip" data-placement="top" title="{{post.title}}">{{next}} &rarr;</a>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+
+
+
+                <hr>
+                <hr>
+
+                <!--
+                <ul class="pager">
+                    <li class="previous">
+                        <a href="{{ site.baseurl }}/en/2015/11/30/Car-accidents-in-Barcelona.en/" data-toggle="tooltip" data-placement="top" title="The most dangerous intersection in Barcelona">&larr; Previous</a>
+                    </li>
+                    <li class="next">
+                        <a href="{{ site.baseurl }}/en/2015/12/07/Every-car-accident-in-Barcelona-since-2010.en/" data-toggle="tooltip" data-placement="top" title="Every Barcelona car accident since 2010">Next &rarr;</a>
+                    </li>
+                </ul>
+                -->
+
+                    
+
+
+
+
+                <!-- END LANGUAGE SPECIFIC FORWARD/NEXT MENU -->
+
+                <div align='center'>
+
+                <a href="{{ site.baseurl }}/catalan">
+                    <img src="{{ site.baseurl }}/img/banderes/ca.png" alt="" align='right' style='float:right' height="100" width="100">
+                </a>
+
+
+                <a href="{{ site.baseurl }}/espanol">
+                    <img src="{{ site.baseurl }}/img/banderes/es.png" alt="" align='left' style='float:left' height="100" width="100">
+                </a>
+
+                <div id='content' align='center'>
+                <a href="{{ site.baseurl }}/english">
+                    <img src="{{ site.baseurl }}/img/banderes/en.png" alt="" align='center' height="100" width="100">
+                </a>
+
+                </div>
+                </div>
+
+
+
+            </div>
+            <div class="column">
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+                <!-- Right side minimalist wide skyscraper -->
+                <ins class="adsbygoogle"
+                     style="display:inline-block;width:160px;height:600px"
+                     data-ad-client="ca-pub-7902219614622730"
+                     data-ad-slot="5414662803"></ins>
+                <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+            </div>
+        </div>
+    </div>
+
+</article>
+
+<hr>

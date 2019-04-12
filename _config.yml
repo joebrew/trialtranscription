@@ -1,0 +1,14 @@
+# Site settings
+title: Transcribing the trial
+header-img: img/bunkers_tilt_low.jpg
+email: joebrew@gmail.com
+description: "Transcribing the trial"
+url: "http://trialtranscription.com"
+twitter_username: joethebrew
+
+# Build settings
+markdown: kramdown
+highlighter: pygments
+permalink: pretty
+paginate: 15
+exclude: ["less","node_modules","Gruntfile.js","package.json","README.md"]
