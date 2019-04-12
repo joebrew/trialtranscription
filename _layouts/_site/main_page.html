@@ -1,0 +1,103 @@
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>BCN data</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico">
+    <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="css/style.css?v1.1">
+</head>
+
+<body>
+ <div class="header-video">
+
+
+<!--  <div id="over" align="center">
+ <column>
+<p text-align='center'>test</p>
+ </column>
+</div> -->
+
+ <div id="over" align="center">
+ <column>
+ <br>
+BCN data
+<br>
+ </column>
+</div>
+
+
+
+<!--     <img src="img/masthead2.png"
+         class="header-video__media"
+         data-video-URL="https://www.youtube.com/embed/Scxs7L0vhZ4"
+         data-teaser="video/random"
+         data-video-width="560"
+         data-video-height="315"> -->
+
+     <img src="img/masthead2.png"
+         class="header-video__media"
+         data-teaser="video/bcn"
+         data-video-width="560"
+         data-video-height="315">
+
+
+
+
+<!--     <a href="https://www.youtube.com/embed/Scxs7L0vhZ4" class="header-video__play-trigger" id="header-video__play-trigger">Play video</a>
+    <button type="button" class="header-video__close-trigger" id="header-video__close-trigger">Close video</button> -->
+  </div>
+
+<hr>
+
+
+
+<!-- Page Header -->
+<!-- <header class="intro-header" style="background-image: url('/')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="site-heading">
+                    <h1></h1>
+                    <hr class="small">
+                    <span class="subheading"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header> -->
+
+<!-- Main Content -->
+<div class="container">
+	<div class="row">
+		<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+			
+		</div>
+	</div>
+</div>
+
+<hr>
+
+
+
+
+
+
+
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="js/modernizr.js"></script>
+<script src="js/script.js?v1.1"></script>
+<script>
+  $(document).ready(function() {
+    $('.header-video').each(function(i, elem) {
+        headerVideo = new HeaderVideo({
+          element: elem,
+          media: '.header-video__media',
+          playTrigger: '.header-video__play-trigger',
+          closeTrigger: '.header-video__close-trigger'
+        });
+    });
+  });
+</script>
+</body>
