@@ -1,7 +1,90 @@
 ---
 layout: page
 title: "English"
-header_title: "xxx"
-description: "yyy"
+header_title: "Transcribing the trial"
+description: "A collaborative project to transcribe and subtitle the entirety of Spain's trial of Catalan political and social leaders"
 header-img: "img/bunkers_tilt.jpg"
 ---
+
+
+<br>
+<br>
+<br>
+
+<h2 align='center'>Why?</h2>
+
+It is important that the world know what is going on in Spain's trial of 12 Catalan political and social leaders. Transcribing the trial will make information about what is happening in it more accessible.
+
+<h2 align='center'>Volunteer to help</h2>
+
+Transcribing hundreds of hours of video will require a group effort. We need lots of volunteers. Can you help? Please sign up <a href="https://forms.gle/2x9YPR7xFUEqsEL77">HERE</a> (or below), and we will assign you a portion of video to transcribe.
+
+<iframe src="https://docs.google.com/forms/d/e/1FAIpQLSc5lt1b7fiV22OOyPvVIxdeEynl4U5G2kruYjfDIG1bNNIoWg/viewform?embedded=true" width="640" height="1186" frameborder="0" marginheight="0" marginwidth="0">Loading...</iframe>
+
+
+
+<h2 align='center'>What we will do</h2>
+
+We will:
+<ul>
+
+<li>Create an accurate written translation of the trial which will be translatable to other languages (so that citizens of countries that do not speak Spanish can understand the trial).
+
+<li>Build a searchable dataset so that people can examine the trial's content on their own (ie, carry out searches for words like "violent" or "human walls").
+
+<li> Build a web application so that people can search for certain words, people, places, etc. and immediately see the corresponding video from the trial.
+
+<li>Help journalists, politicians, and lawyers to do their job by making the trial more open, transparent, and accessible.
+<ul>
+<br>
+<br>
+<br>
+
+
+<div align='center'>
+
+<a href="{{ site.baseurl }}/catalan">
+    <img src="{{ site.baseurl }}/img/banderes/ca.png" alt="" align='right' style='float:right' height="100" width="100">
+</a>
+
+
+<a href="{{ site.baseurl }}/espanol">
+    <img src="{{ site.baseurl }}/img/banderes/es.png" alt="" align='left' style='float:left' height="100" width="100">
+</a>
+
+<div id='content' align='center'>
+<a href="{{ site.baseurl }}/english">
+    <img src="{{ site.baseurl }}/img/banderes/en.png" alt="" align='center' height="100" width="100">
+</a>
+
+</div>
+</div>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br><br>
+<br>
+<br>
+
+<hr>
+<hr>
+
+
+{% for post in paginator.posts %}
+<div class="post-preview">
+    <a href="{{ post.url | prepend: site.baseurl }}">
+        <h2 class="post-title">            {{ post.title }}
+        </h2>
+        {% if post.subtitle %}
+        <h3 class="post-subtitle">
+            {{ post.subtitle }}
+        </h3>
+        {% endif %}
+    </a>
+    <p class="post-meta">Posted by {% if post.author %}{{ post.author }}{% else %}{{ site.title }}{% endif %} on {{ post.date | date: "%B %-d, %Y" }}</p>
+</div>
+<hr>
+{% endfor %}
