@@ -1,4 +1,4 @@
-local <- FALSE
+local <- TRUE
 library(shiny)
 library(shinydashboard)
 library(sparkline)
