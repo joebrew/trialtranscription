@@ -22,17 +22,8 @@ body <- dashboardBody(
   ),
   tabItems(
     tabItem(
-      tabName="transcribir",
-      fluidPage(h3('Here it is.'),
-                fluidRow(
-                  column(6, align = 'center',
-                         actionButton('quiero_transcribir',
-                                      label = 'Quiero transcribir')),
-                  column(6, align = 'center',
-                         actionButton('quiero_repasar',
-                                      label = 'Quiero repasar'))
-                ),
-                uiOutput('ui_transcription_page'))
+      tabName = 'transcribir',
+      uiOutput('ui_transcribir')
     ),
     tabItem(
       tabName = 'log_in',
@@ -83,6 +74,7 @@ server <- function(input, output,session) {
   user_name <- reactiveVal(value = '')
   password <- reactiveVal(value = '')
   log_in_text <- reactiveVal(value = '')
+  quiero_reactive <- reactiveVal(value = 'Transcribir')
   data <- reactiveValues(users = users,
                          transcriptions = transcriptions,
                          chunks = chunks)
@@ -129,8 +121,7 @@ server <- function(input, output,session) {
                            user_name(),
                            '. Tu contraseña es password.'))
         old_users <- data$users
-        this_user <- tibble(user_id = max(old_users$user_id) + 1,
-                            user_email = user_name(),
+        this_user <- tibble(user_email = user_name(),
                             user_password = 'password')
         # Update the database
         update_db(data = this_user,
@@ -231,23 +222,132 @@ server <- function(input, output,session) {
       }
       })
 
-  # Dynamic video for watching
-  output$video <- renderUI({
-    the_id <- '53m3xLaVC6o'
-    start_time <- 5246
-    end_time <- 5250
-    the_url <- paste0(
-      # 'https://www.youtube.com/embed/',
-      the_id,
-      '?start=',
-      start_time, 
-      '&end=',
-      end_time
-    )
-    embed_youtube(the_url)
+  # Transcription page
+  output$ui_transcribir <- renderUI({
+    
+    # Read the chunks
+    done_transcriptions <- data$transcriptions
+    new_chunks <- chunks %>%
+      filter(!chunk_url %in% done_transcriptions$chunk_url)
+    done_chunks <- chunks %>%
+      filter(chunk_url %in% done_transcriptions$chunk_url)
+    
+    new_choices <- paste0(new_chunks$chunk_url)
+    new_labels <- paste0(new_chunks$video_title, ' minuto: ',
+                         new_chunks$start_time / 60 + 1)
+    if(length(new_choices) > 0){
+      names(new_choices) <- new_labels  
+    } else {
+      new_choices <- NULL
+    }
+    
+    
+    done_choices <- paste0(done_chunks$chunk_url)
+    done_labels <- paste0(done_chunks$video_title, ' minuto: ',
+                         done_chunks$start_time / 60 + 1)
+    if(length(done_choices) > 0){
+      names(done_choices) <- done_labels  
+    } else {
+      done_choices <- NULL
+    }
+    
+    input_quiero <- input$quiero
+    if(is.null(input_quiero)){
+      ht <- ''
+      segment_select <- NULL
+    } else {
+      if(input_quiero == 'Transcribir'){
+        quiero_reactive('Transcribir')
+        ht <- 'Selecciona uno de los segmentos que todavía no se ha transcrito, y transcríbelo.'
+        segment_select <- selectInput('segment',
+                                      label = 'Segmento',
+                                      choices = new_choices)
+      } else {
+        if(length(done_choices) > 0){
+          ht <- 'Selecciona uno de los segmentos ya transcritos y somete, si hace falta, correcciones.' 
+          quiero_reactive('Repasar')
+          segment_select <- selectInput('segment',
+                                        label = 'Segmento',
+                                        choices = done_choices)
+        } else {
+          ht <- 'No hay segmentos por repasar. Seleccione "Transcribir" para transcribir un segmento nuevo.' 
+          quiero_reactive('Repasar')
+          segment_select <- NULL
+        }
+       
+      }
+    }
+    
+    fluidPage(
+      fluidRow(
+        column(12,
+               align = 'center',
+               selectInput('quiero',
+                           label = 'Quiero...',
+                           choices = c('Transcribir', 'Repasar'),
+                           selected = quiero_reactive()))
+      ),
+      fluidRow(
+        column(12, align = 'center',
+               helpText(ht))
+      ),
+      fluidRow(
+        column(12,
+               align = 'center',
+               segment_select
+        )
+      ),
+
+    fluidRow(column(12,
+                    align = 'center',
+                    uiOutput('ui_video'))),
+    fluidRow(
+      column(12,
+             align = 'center',
+             textAreaInput('transcription_text',
+                           label = 'Transcripción',
+                           value = '',
+                           width = '100%',                                          # cols = 1, 
+                           # rows = 3,
+                           placeholder = 'Escribe la transcripción aquí',
+                           resize = 'both'))
+    ))
   })
   
-  output$ui_transcription_page <- renderUI({
+  
+  # Dynamic video for watching
+  output$video <- renderUI({
+    ok <- FALSE
+    selected_segment <- input$segment
+    if(!is.null(selected_segment)){
+      ok <- TRUE
+    }
+    if(ok){
+      the_url <- 
+        paste0(
+          # 'https://www.youtube.com/embed/',
+          selected_segment
+        )
+      message(the_url, '    THE URL IS THIS. ')
+      embed_youtube(the_url)
+    } else {
+      NULL
+    }
+    # the_id <- '53m3xLaVC6o'
+    # start_time <- 5246
+    # end_time <- 5250
+    # the_url <- paste0(
+    #   # 'https://www.youtube.com/embed/',
+    #   the_id,
+    #   '?start=',
+    #   start_time,
+    #   '&end=',
+    #   end_time
+    # )
+    
+  })
+  
+  output$ui_video <- renderUI({
     htmlOutput('video')
   })
   
