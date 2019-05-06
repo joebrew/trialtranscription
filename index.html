@@ -1,83 +1,23 @@
----
-layout: page
-description: "A collaborative project to transcribe and subtitle the entirety of Spain's trial of Catalan political and social leaders"
----
 
-<br>
-<br>
-<br>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Aplicación: transcribiendo el juicio, minuto a minuto</title>
+        <style type="text/css">
+            body, html
+            {
+                margin: 0; padding: 0; height: 100%; overflow: hidden;
+            }
 
-<h2 align='center'>Why?</h2>
-
-It is important that the world know what is going on in Spain's trial of 12 Catalan political and social leaders. Transcribing the trial will make information about what is happening in it more accessible.
-
-<h2 align='center'>Volunteer to help</h2>
-
-Transcribing hundreds of hours of video will require a group effort. We need lots of volunteers. Can you help? You can contribute by transcribing as little as just one minute. Go <a href="http://trialtranscription.com/app">HERE</a> to get started.
-
-
-<h2 align='center'>What we will do</h2>
-
-We will:
-<ul>
-
-<li>Create an accurate written translation of the trial which will be translatable to other languages (so that citizens of countries that do not speak Spanish can understand the trial).
-
-<li>Build a searchable dataset so that people can examine the trial's content on their own (ie, carry out searches for words like "violent" or "human walls").
-
-<li> Build a web application so that people can search for certain words, people, places, etc. and immediately see the corresponding video from the trial.
-
-<li>Help journalists, politicians, and lawyers to do their job by making the trial more open, transparent, and accessible.
-<ul>
-<br>
-<br>
-<br>
-
-
-<div align='center'>
-
-<a href="{{ site.baseurl }}/catalan">
-    <img src="{{ site.baseurl }}/img/banderes/ca.png" alt="" align='right' style='float:right' height="100" width="100">
-</a>
-
-
-<a href="{{ site.baseurl }}/espanol">
-    <img src="{{ site.baseurl }}/img/banderes/es.png" alt="" align='left' style='float:left' height="100" width="100">
-</a>
-
-<div id='content' align='center'>
-<a href="{{ site.baseurl }}/english">
-    <img src="{{ site.baseurl }}/img/banderes/en.png" alt="" align='center' height="100" width="100">
-</a>
-
-</div>
-</div>
-
-<br>
-<br>
-<br>
-<br>
-<br>
-<br><br>
-<br>
-<br>
-
-<hr>
-<hr>
-
-
-{% for post in paginator.posts %}
-<div class="post-preview">
-    <a href="{{ post.url | prepend: site.baseurl }}">
-        <h2 class="post-title">            {{ post.title }}
-        </h2>
-        {% if post.subtitle %}
-        <h3 class="post-subtitle">
-            {{ post.subtitle }}
-        </h3>
-        {% endif %}
-    </a>
-    <p class="post-meta">Posted by {% if post.author %}{{ post.author }}{% else %}{{ site.title }}{% endif %} on {{ post.date | date: "%B %-d, %Y" }}</p>
-</div>
-<hr>
-{% endfor %}
+            #content
+            {
+                position:absolute; left: 0; right: 0; bottom: 0; top: 0px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="content">
+            <iframe width="100%" height="100%" frameborder="0" src="https://joebrew.shinyapps.io/trial" />
+        </div>
+    </body>
+</html>

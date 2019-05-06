@@ -1,4 +1,4 @@
-local <- FALSE
+local <- TRUE
 # To be run just once, to create the chunks table
 # Run from inside the R directory
 
@@ -154,7 +154,8 @@ chunks$chunk_id <- 1:nrow(chunks)
 transcriptions <- tibble(chunk_url = 'n_Ph7WSXrb0?start=0&end=61',
                          user = 'joebrew@gmail.com',
                          transcription = 'This is a test',
-                         created_at = Sys.time())
+                         created_at = Sys.time(),
+                         comment = '')
 
 # Add to database
 if(!local){

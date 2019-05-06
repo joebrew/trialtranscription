@@ -10,6 +10,9 @@ source('global.R')
 header <- dashboardHeader(title="Transcripción del juicio",
                           tags$li(class = 'dropdown',  
                                   tags$style(type='text/css', "#log_out {margin-right: 10px; margin-left: 10px; font-size:80%; margin-top: 10px; margin-bottom: -10px;}"),
+                                  tags$style(type='text/css', "#quiero {margin-right: 20px; margin-left: 10px; font-size:80%; margin-top: 5px; margin-bottom: -15px;}"),
+                                  tags$li(class = 'dropdown',
+                                          uiOutput('quiero_ui')),
                                   tags$li(class = 'dropdown',
                                           uiOutput('log_out_ui'))))
 sidebar <- dashboardSidebar(
@@ -32,26 +35,15 @@ body <- dashboardBody(
     tabItem(
       tabName = 'informacion',
       fluidPage(
-        fluidRow(
-          includeMarkdown("include.md")
-        ),
-        fluidRow(
-          div(img(src='logo_clear.png', align = "center"), style="text-align: center;"),
-          h4('A pro bono project of ',
-             a(href = 'http://databrew.cc',
-               target='_blank', 'Databrew'),
-             align = 'center'),
-          p('Empowering research and analysis through collaborative data science for social good.', align = 'center'),
-          div(a(actionButton(inputId = "email", label = "info@databrew.cc", 
-                             icon = icon("envelope", lib = "font-awesome")),
-                href="mailto:info@databrew.cc",
-                align = 'center')), 
-          style = 'text-align:center;'
-        )
-      )
+        fluidRow(column(12, align = 'center',
+                        selectInput('language',
+                                    'Lengua / Language / Llengua',
+                                    choices = c('Español', 'Català', 'English')))),
+        uiOutput('ui_include'))
     )
   )
 )
+
 
 # Function for authenticating password
 user_exists <- function(user_name, 
@@ -225,49 +217,88 @@ server <- function(input, output,session) {
             tabName = 'informacion',
             icon = icon("cog", lib = "glyphicon")))
       }
-      })
+    })
   
   # Update the previous transcription
   observeEvent(c(input$quiero,
                  input$segment), {
-    ok <- FALSE
-    is <- input$segment
-    iq <- input$quiero
-    # if(!is.null(iq)){
-      if(iq == 'Repasar'){
-        if(!is.null(is)){
-          message('So far, so good. Here is the head of transcriptions')
-          print(head(transcriptions))
-          the_previous <- data$transcriptions %>%
-            filter(chunk_url == is) %>%
-            filter(!is.na(transcription),
-                   transcription != '')
-          message('After filtering, it is...')
-          print(head(transcriptions))
-          
-          if(nrow(the_previous) > 0){
-            ok <- TRUE
-          }
-        }
-      }
-    # }
-    if(ok){
-      the_previous <- the_previous[nrow(the_previous),]
-      previous_transcription(the_previous$transcription)
-    } else {
-      previous_transcription('')
-    }
-  })
+                   ok <- FALSE
+                   is <- input$segment
+                   iq <- input$quiero
+                   # if(!is.null(iq)){
+                   if(iq == 'Repasar'){
+                     if(!is.null(is)){
+                       message('So far, so good. Here is the head of transcriptions')
+                       print(head(transcriptions))
+                       the_previous <- data$transcriptions %>%
+                         filter(chunk_url == is) %>%
+                         filter(!is.na(transcription),
+                                transcription != '')
+                       message('After filtering, it is...')
+                       print(head(transcriptions))
+                       
+                       if(nrow(the_previous) > 0){
+                         ok <- TRUE
+                       }
+                     }
+                   }
+                   # }
+                   if(ok){
+                     the_previous <- the_previous[nrow(the_previous),]
+                     previous_transcription(the_previous$transcription)
+                   } else {
+                     previous_transcription('')
+                   }
+                 })
   
   # Observe the segment selector and update the reactive object
   observeEvent(input$segment,{
     segment_reactive(input$segment)
   })
-
+  
+  # Which language to include the info
+  output$ui_include <- renderUI({
+    
+    
+    language <- input$language
+    if(is.null(language)){
+      language <- 'Español'
+    }
+    
+    if(language == 'Español'){
+      include_file <- "includes/include_es.md"
+    } else if(language == 'English'){
+      include_file <- "includes/include_en.md"
+    } else if(language == 'Català'){
+      include_file <- "includes/include_ca.md"
+    }
+    
+    fluidPage(
+      fluidRow(
+        includeMarkdown(include_file)
+      ),
+      fluidRow(
+        div(img(src='logo_clear.png', align = "center"), style="text-align: center;"),
+        h4('A pro bono project of ',
+           a(href = 'http://databrew.cc',
+             target='_blank', 'Databrew'),
+           align = 'center'),
+        p('Empowering research and analysis through collaborative data science for social good.', align = 'center'),
+        div(a(actionButton(inputId = "email", label = "info@databrew.cc", 
+                           icon = icon("envelope", lib = "font-awesome")),
+              href="mailto:info@databrew.cc",
+              align = 'center')), 
+        style = 'text-align:center;'
+      )
+    )
+  })
+  
+  
   # Transcription page
   output$ui_transcribir <- renderUI({
     tai <- NULL
     ab <- NULL
+    comment <- NULL
     
     # Read the chunks
     done_transcriptions <- data$transcriptions
@@ -288,7 +319,7 @@ server <- function(input, output,session) {
     
     done_choices <- paste0(done_chunks$chunk_url)
     done_labels <- paste0(done_chunks$video_title, ' minuto: ',
-                         done_chunks$start_time / 60 + 1)
+                          done_chunks$start_time / 60 + 1)
     if(length(done_choices) > 0){
       names(done_choices) <- done_labels  
     } else {
@@ -302,23 +333,26 @@ server <- function(input, output,session) {
     } else {
       if(input_quiero == 'Transcribir'){
         quiero_reactive('Transcribir')
-        ht <- 'Selecciona uno de los segmentos que todavía no se ha transcrito, y transcríbelo.'
+        ht <- 'Selecciona, a la izquierda, uno de los segmentos que todavía no se ha transcrito, y transcríbelo a la derecha.'
         sr <- segment_reactive()
         segment_select <- selectInput('segment',
                                       label = 'Segmento',
                                       choices = new_choices,
                                       selected = sr)
-        tai <- textAreaInput('transcription_text',
-                             label = 'Transcripción',
-                             value = '',
-                             width = '100%', 
-                             placeholder = 'Escribe la transcripción aquí',
-                             resize = 'both')
+        tai <- text_area_input('transcription_text',
+                               label = 'Transcripción',
+                               value = '',
+                               width = '100%', 
+                               height = '100%',
+                               placeholder = 'Escribe la transcripción aquí',
+                               resize = 'both')
         ab <- actionButton('transcription_submit',
-                           label = 'Somete la transcripción')
+                           label = 'Somete la transcripción (y comentario si aplicable)')
+        comment <- text_area_input('comment', 'Comentarios sobre la transcripción',
+                                   placeholder = 'Por ejemplo, "no se escucha bien lo que dice en el segundo 32", o "no hablan durante este minuto del juico", etc. Deja en blanco si no tienes comentarios.')
       } else {
         if(length(done_choices) > 0){
-          ht <- 'Selecciona uno de los segmentos ya transcritos y somete, si hace falta, correcciones.' 
+          ht <- 'Selecciona, a la izquierda, uno de los segmentos ya transcritos y somete, si hace falta, correcciones a la derecha. Si no hace falta ninguna corrección, somete la transcripción tal cual.' 
           selected_id <- input$segment
           pt <- previous_transcription()
           tai <- textAreaInput('transcription_text',
@@ -329,7 +363,10 @@ server <- function(input, output,session) {
                                placeholder = 'Escribe la transcripción aquí',
                                resize = 'both')
           ab <- actionButton('transcription_submit',
-                             label = 'Somete la corrección')
+                             label = 'Somete la corrección (y comentario si aplicable)')
+          comment <- text_area_input('comment', 'Comentarios sobre la transcripción',
+                                     placeholder = 'Por ejemplo, "no se escucha bien lo que dice en el segundo 32", o "no hablan durante este minuto del juico", etc. Deja en blanco si no tienes comentarios.')
+          
           quiero_reactive('Repasar')
           sr <- segment_reactive()
           segment_select <- selectInput('segment',
@@ -339,59 +376,47 @@ server <- function(input, output,session) {
         } else {
           tai <- NULL
           ab <- NULL
+          comment <- NULL
           ht <- 'No hay segmentos por repasar. Seleccione "Transcribir" para transcribir un segmento nuevo.' 
           quiero_reactive('Repasar')
           segment_select <- NULL
         }
-       
+        
       }
     }
     
     fluidPage(
       fluidRow(
-        column(12,
-               align = 'center',
-               selectInput('quiero',
-                           label = 'Quiero...',
-                           choices = c('Transcribir', 'Repasar'),
-                           selected = quiero_reactive()))
-      ),
-      fluidRow(
         column(12, align = 'center',
                helpText(ht))
       ),
-      fluidRow(
-        column(12,
-               align = 'center',
-               segment_select
-        )
-      ),
-
-    fluidRow(column(12,
-                    align = 'center',
-                    uiOutput('ui_video'))),
-    fluidRow(
-      column(12,
-             align = 'center',
-             tai)
-    ),
-    fluidRow(column(12,
-                    align = 'center',
-                    ab))
+      
+      fluidRow(column(6,
+                      align = 'center',
+                      segment_select,
+                      uiOutput('ui_video')),
+               column(6,
+                      align = 'center',
+                      tai, br(),
+                      comment, br(),
+                      ab)
+      )
     )
   })
   
-
+  
   # Observe the event transcription and update
   observeEvent(input$transcription_submit,{
     the_url <- input$segment
     the_user <- user_name()
     the_transcription <- input$transcription_text
     the_time <- Sys.time()
+    the_comment <- input$comment
     new_row <- tibble(chunk_url = the_url,
                       user = the_user,
                       transcription = the_transcription,
-                      created_at = the_time)
+                      created_at = the_time,
+                      comment = the_comment)
     # Update the reactive object
     previous_transcription(the_transcription)
     
@@ -447,24 +472,24 @@ server <- function(input, output,session) {
     # Make the cambiar contraseña row
     if(sc){
       scrow <- 
-      fluidRow(
-        h3('Cambiar contraseña'),
-        column(6,
-               textInput('user_name_contra',
-                         'Nombre de usuario',
-                         value = ''),
-               textInput('old_password',
-                         'Contraseña actual',
-                         value = '')),
-        column(6,
-               textInput('new_password',
-                         'Contraseña nueva',
-                         value = ''),
-               textInput('new_password2',
-                         'Confirmar contraseña nueva',
-                         value = '')),
-        actionButton('cambiar', 'Cambiar contraseña')
-      )
+        fluidRow(
+          h3('Cambiar contraseña'),
+          column(6,
+                 textInput('user_name_contra',
+                           'Correo electrónico',
+                           value = ''),
+                 textInput('old_password',
+                           'Contraseña actual',
+                           value = '')),
+          column(6,
+                 textInput('new_password',
+                           'Contraseña nueva',
+                           value = ''),
+                 textInput('new_password2',
+                           'Confirmar contraseña nueva',
+                           value = '')),
+          actionButton('cambiar', 'Cambiar contraseña')
+        )
     } else {
       scrow <- fluidRow()
     }
@@ -473,9 +498,9 @@ server <- function(input, output,session) {
       fluidRow(
         column(6,
                h2('Ya tengo una cuenta'),
-               h3('Entrar'),
+               # h3('Entrar'),
                textInput('user_name',
-                         'Nombre de usuario',
+                         'Correo electrónico',
                          value = ''),
                passwordInput('password',
                              'Contraseña',
@@ -485,7 +510,7 @@ server <- function(input, output,session) {
         column(6,
                h2('Quiero crear una cuenta'),
                textInput('user_name_crear',
-                         'Nombre de usuario',
+                         'Correo electrónico',
                          value = '')),
         actionButton('crear_cuenta', 'Crear cuenta')
       ),
@@ -493,14 +518,33 @@ server <- function(input, output,session) {
         column(12, align = 'center',
                h3(lit))
       ),
-    fluidRow(
-      column(12, align = 'center',
-             actionButton('show_cambiar_button',
-                          label = 'Cambiar contraseña'))
-    ),
-    scrow
+      fluidRow(
+        column(12, align = 'center',
+               actionButton('show_cambiar_button',
+                            label = 'Cambiar contraseña'))
+      ),
+      scrow
     )
   })
+  
+  output$quiero_ui <-renderUI({
+    li <- logged_in()
+    
+    if(li){
+      the_choices <- c('Transcribir', 'Repasar')
+      names(the_choices) <- paste0('Quiero ', the_choices)
+      tags$li(class = 'dropdown',
+              radioButtons('quiero',
+                           label = '',
+                           inline = TRUE,
+                           choices = the_choices,
+                           selected = quiero_reactive()))
+      
+    } else {
+      NULL
+    }
+  })
+  
   
   output$log_out_ui <- renderUI({
     li <- logged_in()
@@ -508,10 +552,12 @@ server <- function(input, output,session) {
     if(li){
       tags$li(class = 'dropdown',
               actionButton('log_out', label = 'Log out', icon = icon('times')))
+      
     } else {
       NULL
     }
   })
+  
   
   session$onSessionEnded(function() {
     message('Session ended. Closing the connection pool.')
@@ -520,6 +566,6 @@ server <- function(input, output,session) {
     })
     
   })
-  }
+}
 
 shinyApp(ui, server)

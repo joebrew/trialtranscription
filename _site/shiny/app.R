@@ -33,6 +33,9 @@ body <- dashboardBody(
       tabName = 'informacion',
       fluidPage(
         fluidRow(
+          includeMarkdown("include.md")
+        ),
+        fluidRow(
           div(img(src='logo_clear.png', align = "center"), style="text-align: center;"),
           h4('A pro bono project of ',
              a(href = 'http://databrew.cc',
