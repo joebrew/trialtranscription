@@ -74,7 +74,9 @@ server <- function(input, output,session) {
   user_name <- reactiveVal(value = '')
   password <- reactiveVal(value = '')
   log_in_text <- reactiveVal(value = '')
+  previous_transcription <- reactiveVal(value = '')
   quiero_reactive <- reactiveVal(value = 'Transcribir')
+  segment_reactive <- reactiveVal(value = '')
   data <- reactiveValues(users = users,
                          transcriptions = transcriptions,
                          chunks = chunks)
@@ -221,9 +223,51 @@ server <- function(input, output,session) {
             icon = icon("cog", lib = "glyphicon")))
       }
       })
+  
+  # Update the previous transcription
+  observeEvent(c(input$quiero,
+                 input$segment), {
+    ok <- FALSE
+    is <- input$segment
+    iq <- input$quiero
+    message('Just starting')
+    message('input$segment is ', is)
+    message('input$quiero is ', iq)
+    # if(!is.null(iq)){
+      if(iq == 'Repasar'){
+        if(!is.null(is)){
+          message('So far, so good. Here is the head of transcriptions')
+          print(head(transcriptions))
+          the_previous <- transcriptions %>%
+            filter(chunk_url == is) %>%
+            filter(!is.na(transcription),
+                   transcription != '')
+          message('After filtering, it is...')
+          print(head(transcriptions))
+          
+          if(nrow(the_previous) > 0){
+            ok <- TRUE
+          }
+        }
+      }
+    # }
+    if(ok){
+      the_previous <- the_previous[nrow(the_previous),]
+      previous_transcription(the_previous$transcription)
+    } else {
+      previous_transcription('')
+    }
+  })
+  
+  # Observe the segment selector and update the reactive object
+  observeEvent(input$segment,{
+    segment_reactive(input$segment)
+  })
 
   # Transcription page
   output$ui_transcribir <- renderUI({
+    tai <- NULL
+    ab <- NULL
     
     # Read the chunks
     done_transcriptions <- data$transcriptions
@@ -259,17 +303,42 @@ server <- function(input, output,session) {
       if(input_quiero == 'Transcribir'){
         quiero_reactive('Transcribir')
         ht <- 'Selecciona uno de los segmentos que todavía no se ha transcrito, y transcríbelo.'
+        sr <- segment_reactive()
         segment_select <- selectInput('segment',
                                       label = 'Segmento',
-                                      choices = new_choices)
+                                      choices = new_choices,
+                                      selected = sr)
+        tai <- textAreaInput('transcription_text',
+                             label = 'Transcripción',
+                             value = '',
+                             width = '100%', 
+                             placeholder = 'Escribe la transcripción aquí',
+                             resize = 'both')
+        ab <- actionButton('transcription_submit',
+                           label = 'Somete la transcripción')
       } else {
         if(length(done_choices) > 0){
           ht <- 'Selecciona uno de los segmentos ya transcritos y somete, si hace falta, correcciones.' 
+          selected_id <- input$segment
+          pt <- previous_transcription()
+          tai <- textAreaInput('transcription_text',
+                               label = 'Transcripción',
+                               value = pt,
+                               width = '100%',                                          # cols = 1, 
+                               # rows = 3,
+                               placeholder = 'Escribe la transcripción aquí',
+                               resize = 'both')
+          ab <- actionButton('transcription_submit',
+                             label = 'Somete la corrección')
           quiero_reactive('Repasar')
+          sr <- segment_reactive()
           segment_select <- selectInput('segment',
                                         label = 'Segmento',
-                                        choices = done_choices)
+                                        choices = done_choices,
+                                        selected = sr)
         } else {
+          tai <- NULL
+          ab <- NULL
           ht <- 'No hay segmentos por repasar. Seleccione "Transcribir" para transcribir un segmento nuevo.' 
           quiero_reactive('Repasar')
           segment_select <- NULL
@@ -304,16 +373,34 @@ server <- function(input, output,session) {
     fluidRow(
       column(12,
              align = 'center',
-             textAreaInput('transcription_text',
-                           label = 'Transcripción',
-                           value = '',
-                           width = '100%',                                          # cols = 1, 
-                           # rows = 3,
-                           placeholder = 'Escribe la transcripción aquí',
-                           resize = 'both'))
-    ))
+             tai)
+    ),
+    fluidRow(column(12,
+                    align = 'center',
+                    ab))
+    )
   })
   
+  
+  # Observe the event transcription and update
+  observeEvent(input$transcription_submit,{
+    the_url <- input$segment
+    the_user <- user_name()
+    the_transcription <- input$transcription_text
+    the_time <- Sys.time()
+    new_row <- tibble(chunk_url = the_url,
+                      user = the_user,
+                      transcription = the_transcription,
+                      created_at = the_time)
+    # Update the database
+    update_db(data = new_row,
+              table_name = 'transcriptions',
+              connection_object = co)
+    # Update the reactive objects
+    newt <- data$transcriptions %>%
+      bind_rows(new_row)
+    data$transcriptions <- newt
+  })
   
   # Dynamic video for watching
   output$video <- renderUI({
@@ -328,7 +415,6 @@ server <- function(input, output,session) {
           # 'https://www.youtube.com/embed/',
           selected_segment
         )
-      message(the_url, '    THE URL IS THIS. ')
       embed_youtube(the_url)
     } else {
       NULL
