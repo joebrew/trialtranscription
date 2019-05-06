@@ -1,3 +1,7 @@
+local <- TRUE
+# To be run just once, to create the chunks table
+# Run from inside the R directory
+
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
@@ -105,7 +109,7 @@ remove(temp.df, youtube_url, i, youtube_list)
 # Now there is an object called youtube_df, with all the videos
 # Put it into 5 minute chunks
 chunk_list <- list()
-chunk_length <- 300
+chunk_length <- 60
 counter <- 0
 for(i in 1:nrow(youtube_df)){
   message(i)
@@ -138,9 +142,10 @@ for(i in 1:nrow(youtube_df)){
 
 # Create tables for the database
 # Users
-users <- data.frame(user_id = 1:2,
+users <- data.frame(#user_id = 1:2,
                     user_email = c('joebrew@gmail.com', 'joe@databrew.cc'),
                     user_password = 'password',
+                    created_at = Sys.time(),
                     stringsAsFactors = FALSE)
 # Chunks
 chunks <- bind_rows(chunk_list)
@@ -148,15 +153,21 @@ chunks$chunk_id <- 1:nrow(chunks)
 # Transcriptions
 transcriptions <- tibble(chunk_url = 'abc',
                          user = 'joebrew@gmail.com',
-                         transcription = 'This is a test')
+                         transcription = 'This is a test',
+                         created_at = Sys.time())
 
 # Add to database
-# REMOTE
-credentials <- credentials_extract(credentials_file = 'R/credentials/credentials.yaml', all_in_file = TRUE)
-# LOCAL
-# credentials <- credentials_extract(credentials_file = 'R/credentials/credentials_local.yaml', all_in_file = TRUE)
+if(!local){
+  # REMOTE
+  credentials <- credentials_extract(credentials_file = 'credentials/credentials.yaml', all_in_file = TRUE)
+} else {
+  # LOCAL
+  credentials <- credentials_extract(credentials_file = 'credentials/credentials_local.yaml', all_in_file = TRUE)
+}
+
 
 co <- credentials_connect(options_list = credentials)
+
 write_table(connection_object = co,
             table = 'users',
             value = users)
