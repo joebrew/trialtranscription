@@ -1,5 +1,6 @@
 local <- TRUE
 library(shiny)
+library(DT)
 library(shinydashboard)
 library(sparkline)
 library(jsonlite)

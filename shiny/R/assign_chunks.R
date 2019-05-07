@@ -152,7 +152,9 @@ chunks <- bind_rows(chunk_list)
 chunks$chunk_id <- 1:nrow(chunks)
 # Transcriptions
 transcriptions <- tibble(chunk_url = 'n_Ph7WSXrb0?start=0&end=61',
+                         number = 1,
                          user = 'joebrew@gmail.com',
+                         speaker = 'Marchena',
                          transcription = 'This is a test',
                          created_at = Sys.time(),
                          comment = '')

@@ -69,13 +69,14 @@ server <- function(input, output,session) {
   user_name <- reactiveVal(value = '')
   password <- reactiveVal(value = '')
   log_in_text <- reactiveVal(value = '')
-  previous_transcription <- reactiveVal(value = '')
   quiero_reactive <- reactiveVal(value = 'Transcribir')
   segment_reactive <- reactiveVal(value = '')
   data <- reactiveValues(users = users,
                          transcriptions = transcriptions,
-                         chunks = chunks)
+                         chunks = chunks, 
+                         current = data.frame())
   show_cambiar <- reactiveVal(value = FALSE)
+  the_number <- reactiveVal(1)
   
   # Observe the show cambiar button
   observeEvent(input$show_cambiar_button, {
@@ -102,6 +103,93 @@ server <- function(input, output,session) {
         password(input$password)
       }
     }
+  })
+  
+  # Observe the segment selection. If it changes, change the data$current object
+  observeEvent(input$segment,{
+    is <- input$segment
+    message('input$segment has changed to ', is)
+    the_previous <- data$transcriptions %>% filter(chunk_url == is) %>%
+      filter(number == 1)
+    if(nrow(the_previous) != 1){
+      # Either no previous transcription or more than 1 (ie, no need to verify again)
+      data$current <- data.frame()
+    } else {
+      # There is exactly 1 previous transcription, and it needs to be verified
+      one_previous <- data$transcriptions %>% filter(chunk_url == is)
+      # Update the reactive object
+      data$current <- one_previous
+    }
+  })
+  
+  # # Observe any addition of rows, and ensure that the old data does not get deleted
+  observeEvent(input$plus1,{
+    # Capture the old data
+    nn <- the_number()
+    whos <- whats <- c()
+    for(i in 1:nn){
+      whos[i] <- eval(parse(text = paste0('input$who', i)))
+      whats[i] <- eval(parse(text = paste0('input$what', i)))
+    }
+    # Make a dataframe of the current data
+    df <- tibble(who = whos,
+                 what = whats)
+    # Update the reactive objects
+    data$current <- df
+    message('data$current is ')
+    print(data$current)
+  })
+
+  # Create a dynamic ui for adding and removing transcriptions
+  output$dynamic <- renderUI({
+    ok <- TRUE
+    
+    # See if there is a previous transcription selected
+    previous <- data$current
+    any_previous <- FALSE
+    if(!is.null(previous)){
+      if(nrow(previous) > 0){
+        any_previous <- FALSE
+      }
+    }
+
+    # Get the number
+    nn <- the_number()
+    if(ok){
+      if(any_previous){
+        # There is a previous transcription, update the number and load it
+        the_previous <- data$current
+        # Update number
+        # Load previous rows
+        the_rows <- NULL
+        # Load the plus_minus sign
+        pm <- plus_minus(n = nn)
+      } else {
+        # No previous, start a new transcription
+        # Keep any currently entered data though
+        df <- data$current
+        the_rows <- eval(parse(text = make_rows(n = nn, who = df$who, what = df$what)))
+        pm <- plus_minus(n = nn)
+      }
+      out <- fluidPage(the_rows,
+                       pm)
+    } else {
+      out <- NULL
+    }
+    return(out)
+  })
+  
+  # Observe the plus/minus button and delete or add rows
+  observeEvent(input$plus1,{
+    n <- the_number()
+    the_number(n + 1)
+    message('The number just went from ', n, ' to ', n+1, '.')
+  })
+  observeEvent(input$minus1,{
+    n <- the_number()
+    the_number(n -1)
+    message('The number just went from ', n, ' to ', n-1, '.')
+    
   })
   
   # Account creation
@@ -219,37 +307,31 @@ server <- function(input, output,session) {
       }
     })
   
-  # Update the previous transcription
-  observeEvent(c(input$quiero,
-                 input$segment), {
-                   ok <- FALSE
-                   is <- input$segment
-                   iq <- input$quiero
-                   # if(!is.null(iq)){
-                   if(iq == 'Repasar'){
-                     if(!is.null(is)){
-                       message('So far, so good. Here is the head of transcriptions')
-                       print(head(transcriptions))
-                       the_previous <- data$transcriptions %>%
-                         filter(chunk_url == is) %>%
-                         filter(!is.na(transcription),
-                                transcription != '')
-                       message('After filtering, it is...')
-                       print(head(transcriptions))
-                       
-                       if(nrow(the_previous) > 0){
-                         ok <- TRUE
-                       }
-                     }
-                   }
-                   # }
-                   if(ok){
-                     the_previous <- the_previous[nrow(the_previous),]
-                     previous_transcription(the_previous$transcription)
-                   } else {
-                     previous_transcription('')
-                   }
-                 })
+  # # Update the previous transcription
+  # observeEvent(c(input$quiero,
+  #                input$segment), {
+  #                  ok <- FALSE
+  #                  is <- input$segment
+  #                  iq <- input$quiero
+  #                  # if(!is.null(iq)){
+  #                  if(iq == 'Revisar'){
+  #                    if(!is.null(is)){
+  #                      the_previous <- data$transcriptions %>%
+  #                        filter(chunk_url == is) 
+  #                      
+  #                      if(nrow(the_previous) > 0){
+  #                        ok <- TRUE
+  #                      }
+  #                    }
+  #                  }
+  #                  # }
+  #                  if(ok){
+  #                    the_previous <- the_previous[nrow(the_previous),]
+  #                    previous_transcription(the_previous$transcription)
+  #                  } else {
+  #                    previous_transcription('')
+  #                  }
+  #                })
   
   # Observe the segment selector and update the reactive object
   observeEvent(input$segment,{
@@ -293,38 +375,58 @@ server <- function(input, output,session) {
     )
   })
   
+  # Options for segments
+  done_options <- reactiveVal(value = c())
+  new_options <- reactiveVal(value = c())
   
-  # Transcription page
-  output$ui_transcribir <- renderUI({
-    tai <- NULL
-    ab <- NULL
-    comment <- NULL
-    
+  # Observe any submission or log in, and update the done/new options
+  observeEvent(c(input$submit,
+                 input$log_in),{
     # Read the chunks
     done_transcriptions <- data$transcriptions
-    new_chunks <- chunks %>%
-      filter(!chunk_url %in% done_transcriptions$chunk_url)
+    # If a transcription has been done AND checked by someone else, remove it from the list
+    done_transcriptions <- done_transcriptions %>%
+      filter(number == 1) %>% group_by(chunk_url) %>%
+      summarise(n = n()) %>% ungroup %>% filter(n == 1) # ie, anything with 2 is out
     done_chunks <- chunks %>%
       filter(chunk_url %in% done_transcriptions$chunk_url)
-    
-    new_choices <- paste0(new_chunks$chunk_url)
-    new_labels <- paste0(new_chunks$video_title, ' minuto: ',
-                         new_chunks$start_time / 60 + 1)
-    if(length(new_choices) > 0){
-      names(new_choices) <- new_labels  
-    } else {
-      new_choices <- NULL
-    }
-    
-    
     done_choices <- paste0(done_chunks$chunk_url)
-    done_labels <- paste0(done_chunks$video_title, ' minuto: ',
-                          done_chunks$start_time / 60 + 1)
     if(length(done_choices) > 0){
+      done_labels <- paste0(done_chunks$video_title, ' minuto: ',
+                            done_chunks$start_time / 60 + 1)
       names(done_choices) <- done_labels  
     } else {
       done_choices <- NULL
     }
+    
+    new_chunks <- chunks %>%
+      filter(!chunk_url %in% done_transcriptions$chunk_url)
+    new_choices <- paste0(new_chunks$chunk_url)
+    if(length(new_choices) > 0){
+      new_labels <- paste0(new_chunks$video_title, ' minuto: ',
+                           new_chunks$start_time / 60 + 1)
+      names(new_choices) <- new_labels  
+      
+    } else {
+      new_choices <- NULL
+    }
+
+    # Update the reactive objects
+    done_options(done_choices)
+    new_options(new_choices)
+    the_number(1)
+  })
+  
+  
+  
+  # Transcription page
+  output$ui_transcribir <- renderUI({
+    ab <- NULL
+    comment <- NULL
+    
+    # Get the choices
+    done_choices <- done_options()
+    new_choices <- new_options()
     
     input_quiero <- input$quiero
     if(is.null(input_quiero)){
@@ -339,46 +441,30 @@ server <- function(input, output,session) {
                                       label = 'Segmento',
                                       choices = new_choices,
                                       selected = sr)
-        tai <- text_area_input('transcription_text',
-                               label = 'Transcripción',
-                               value = '',
-                               width = '100%', 
-                               height = '100%',
-                               placeholder = 'Escribe la transcripción aquí',
-                               resize = 'both')
-        ab <- actionButton('transcription_submit',
+        ab <- actionButton('submit',
                            label = 'Somete la transcripción (y comentario si aplicable)')
-        comment <- text_area_input('comment', 'Comentarios sobre la transcripción',
+        comment <- text_area_input('comment', 'Comentarios sobre la transcripción (opcional)',
                                    placeholder = 'Por ejemplo, "no se escucha bien lo que dice en el segundo 32", o "no hablan durante este minuto del juico", etc. Deja en blanco si no tienes comentarios.')
       } else {
         if(length(done_choices) > 0){
           ht <- 'Selecciona, a la izquierda, uno de los segmentos ya transcritos y somete, si hace falta, correcciones a la derecha. Si no hace falta ninguna corrección, somete la transcripción tal cual.' 
           selected_id <- input$segment
-          pt <- previous_transcription()
-          tai <- textAreaInput('transcription_text',
-                               label = 'Transcripción',
-                               value = pt,
-                               width = '100%',                                          # cols = 1, 
-                               # rows = 3,
-                               placeholder = 'Escribe la transcripción aquí',
-                               resize = 'both')
-          ab <- actionButton('transcription_submit',
+          ab <- actionButton('submit',
                              label = 'Somete la corrección (y comentario si aplicable)')
-          comment <- text_area_input('comment', 'Comentarios sobre la transcripción',
+          comment <- text_area_input('comment', 'Comentarios sobre la transcripción (opcional)',
                                      placeholder = 'Por ejemplo, "no se escucha bien lo que dice en el segundo 32", o "no hablan durante este minuto del juico", etc. Deja en blanco si no tienes comentarios.')
           
-          quiero_reactive('Repasar')
+          quiero_reactive('Revisar')
           sr <- segment_reactive()
           segment_select <- selectInput('segment',
                                         label = 'Segmento',
                                         choices = done_choices,
                                         selected = sr)
         } else {
-          tai <- NULL
           ab <- NULL
           comment <- NULL
-          ht <- 'No hay segmentos por repasar. Seleccione "Transcribir" para transcribir un segmento nuevo.' 
-          quiero_reactive('Repasar')
+          ht <- 'No hay segmentos por revisar. Seleccione "Transcribir" para transcribir un segmento nuevo.' 
+          quiero_reactive('Revisar')
           segment_select <- NULL
         }
         
@@ -390,35 +476,50 @@ server <- function(input, output,session) {
         column(12, align = 'center',
                helpText(ht))
       ),
-      
       fluidRow(column(6,
                       align = 'center',
                       segment_select,
                       uiOutput('ui_video')),
                column(6,
                       align = 'center',
-                      tai, br(),
+                      uiOutput('dynamic'), br(), br(),
                       comment, br(),
                       ab)
+      ),
+      fluidRow(
+        tags$button(
+          id = "web_button",
+          class = "btn action-button",
+          tags$img(src = "http://images.all-free-download.com/images/graphicthumb/button_play_89677.jpg",
+                   height = "50px")
+        )
       )
     )
   })
   
   
+  # Observe the button presses and update the text
+  observeEvent(input$web_button,{
+    
+  })
+  
+  
   # Observe the event transcription and update
-  observeEvent(input$transcription_submit,{
+  observeEvent(input$submit,{
     the_url <- input$segment
     the_user <- user_name()
-    the_transcription <- input$transcription_text
+    # Get the current data
+    df <- data$current
     the_time <- Sys.time()
     the_comment <- input$comment
     new_row <- tibble(chunk_url = the_url,
+                      number = 1:nrow(df),
                       user = the_user,
-                      transcription = the_transcription,
+                      speaker = df$who,
+                      transcription = df$what,
                       created_at = the_time,
                       comment = the_comment)
-    # Update the reactive object
-    previous_transcription(the_transcription)
+    # Update the reactive previous transcription (not done)
     
     # Update the database
     update_db(data = new_row,
@@ -430,7 +531,7 @@ server <- function(input, output,session) {
     data$transcriptions <- newt
   })
   
-  # Dynamic video for watching
+  # video for watching
   output$video <- renderUI({
     ok <- FALSE
     selected_segment <- input$segment
@@ -498,13 +599,12 @@ server <- function(input, output,session) {
       fluidRow(
         column(6,
                h2('Ya tengo una cuenta'),
-               # h3('Entrar'),
                textInput('user_name',
                          'Correo electrónico',
-                         value = ''),
+                         value = 'joe@databrew.cc'),
                passwordInput('password',
                              'Contraseña',
-                             value = ''),
+                             value = 'password'),
                actionButton('log_in', 'Entrar')
         ),
         column(6,
@@ -531,7 +631,7 @@ server <- function(input, output,session) {
     li <- logged_in()
     
     if(li){
-      the_choices <- c('Transcribir', 'Repasar')
+      the_choices <- c('Transcribir', 'Revisar')
       names(the_choices) <- paste0('Quiero ', the_choices)
       tags$li(class = 'dropdown',
               radioButtons('quiero',
