@@ -7,13 +7,15 @@ make_row <- function(n = 1){
                      placeholder = 'Quien habla?')),
     column(8,
            align = 'center',
-           text_area_input(paste0('que', n),
+           textAreaInput(paste0('que', n),
                            label = 'Qué dice?',
                            placeholder = 'Que dice?'))
   )
 }
 
 make_row_text <- function(n = 1, who = NULL, what = NULL){
+  people <- c('Van den Eynde', 'Marchena')
+  people <- paste0("c(", paste0("'",people, "'", collapse = ','), ")")
   who_ok <- what_ok <- FALSE
   if(!is.null(who)){
     if(!is.na(who)){
@@ -21,9 +23,9 @@ make_row_text <- function(n = 1, who = NULL, what = NULL){
     }
   }
   if(who_ok){
-    who_part <- paste0("value = '", who, "'")
+    who_part <- paste0("selected = '", who, "'")
   } else {
-    who_part <- "placeholder = 'Quien habla?'"
+    who_part <-  "options = list(create = TRUE, placeholder = 'Selecciona o escribe el nombre de la persona')"
   }
   
   if(!is.null(what)){
@@ -39,13 +41,14 @@ make_row_text <- function(n = 1, who = NULL, what = NULL){
   
   paste0("fluidRow(
     column(4, align = 'center',
-           textInput(paste0('who', ", n, "),
-                     label = 'Quien',
-                     ", who_part, ")),
+           selectizeInput(paste0('who', ", n, "),
+                     label = NULL,
+                     ", who_part, ",
+                      choices = ",people, ")),
     column(8,
            align = 'center',
-           text_area_input(paste0('what', ", n, "),
-                           label = 'Qué dice?',
+           textAreaInput(paste0('what', ", n, "),
+                           label = NULL,
                            ", what_part, "))
   )")
 }
@@ -62,4 +65,8 @@ make_rows <- function(n, who = NULL, what = NULL){
                 out,
                 ')')
   return(out)
+}
+
+experiment <- function(){
+  
 }
