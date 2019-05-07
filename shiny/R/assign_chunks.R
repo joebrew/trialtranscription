@@ -60,9 +60,10 @@ library(rvest)
 for(i in 1:length(youtube_list$url)){
   if(!is.na(youtube_list$url[i])){
     message(i)
-    youtube_url = read_html(as.character(youtube_list$url[[i]]))
-    id = as.character(html_nodes(youtube_url, 'meta[itemprop="videoId"]') %>%
-                        html_attr("content"))
+    youtube_url = read_html(as.character(youtube_list$url[i]))
+    # id = as.character(html_nodes(youtube_url, 'meta[itemprop="videoId"]') %>%
+    #                     html_attr("content"))
+    id <- unlist(strsplit(youtube_list$url[i], 'v='))[2]
     date = as.character(html_nodes(youtube_url, 'meta[itemprop="datePublished"]') %>%
                           html_attr("content"))
     title = as.character(html_nodes(youtube_url, 'meta[itemprop="name"]') %>%

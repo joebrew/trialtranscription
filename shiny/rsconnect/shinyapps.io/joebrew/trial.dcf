@@ -5,8 +5,8 @@ account: joebrew
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 911628
-bundleId: 2063519
+bundleId: 2066921
 url: https://joebrew.shinyapps.io/trial/
-when: 1557142069.44467
+when: 1557244188.07221
 asMultiple: FALSE
 asStatic: FALSE

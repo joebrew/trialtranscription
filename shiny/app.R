@@ -127,6 +127,10 @@ server <- function(input, output,session) {
                          current = data.frame())
   show_cambiar <- reactiveVal(value = FALSE)
   the_number <- reactiveVal(1)
+  # Options for segments
+  done_options <- reactiveVal(value = c())
+  new_options <- reactiveVal(value = c())
+  
   
   # Observe the show cambiar button
   observeEvent(input$show_cambiar_button, {
@@ -194,11 +198,11 @@ server <- function(input, output,session) {
 
     # Create a dynamic ui for adding and removing transcriptions
     output$dynamic <- renderUI({
-      
+
       # Trigger any changes from input$segment and input$quiero
       is <- input$segment
       iq <- input$quiero
-      
+
       # If in revise mode, get previous stuff
       if(iq == 'Revisar'){
         # See if there is a previous transcription selected
@@ -214,14 +218,14 @@ server <- function(input, output,session) {
         if(any_previous){
           # There is a previous transcription, Update number
           the_number(nrow(df))
-        } 
+        }
         nn <- the_number()
-        
+
         the_rows <- eval(parse(text = make_rows(n = nn, who = df$who, what = df$what)))
         pm <- plus_minus(n = nn)
         out <- fluidPage(the_rows,
                          pm)
-        
+
       } else {
         # If not in revise mode, just set stuff to default
         nn <- the_number()
@@ -410,13 +414,20 @@ server <- function(input, output,session) {
                  })
 
   
-  # Observe the segment selector and update the reactive object
-  observeEvent(input$segment,{
-    segment_reactive(input$segment)
-  })
+  # # Observe the segment selector and update the reactive object
+  # Had to turn this off due to flashing. Not sure if it affects things.
+  # observeEvent(input$segment,{
+  #   new_is <- input$segment
+  #   old_is <- segment_reactive()
+  #   message('new_is is ', new_is)
+  #   message('old_is is ', old_is)
+  #   if(new_is != old_is)
+  #   segment_reactive(new_is)
+  # })
   
   # Which language to include the info
   output$ui_include <- renderUI({
+    message('Running output$ui_include')
     
     
     language <- input$language
@@ -452,12 +463,10 @@ server <- function(input, output,session) {
     )
   })
   
-  # Options for segments
-  done_options <- reactiveVal(value = c())
-  new_options <- reactiveVal(value = c())
-  
+
   # Observe the transcription submission and update the database
   observeEvent(input$submit,{
+    message('Running observeEvent(input$submit')
     the_url <- input$segment
     the_user <- user_name()
     # Update the current data
@@ -504,6 +513,8 @@ server <- function(input, output,session) {
   # Observe any submission or log in, and update the done/new options
   observeEvent(c(input$submit,
                  input$log_in),{
+                   message('Running observeEvent(c(input$submit,
+                 input$log_in)')
     # Read the chunks
     done_transcriptions <- data$transcriptions
     # If a transcription has been done AND checked by someone else, remove it from the list
@@ -546,6 +557,7 @@ server <- function(input, output,session) {
   
   # Transcription page
   output$ui_transcribir <- renderUI({
+    message('Running output$ui_transcribir')
     ab <- NULL
     comment <- NULL
     
@@ -621,25 +633,26 @@ server <- function(input, output,session) {
   output$video <- renderUI({
     ok <- FALSE
     selected_segment <- input$segment
+    message('The selected_segment is ', selected_segment)
     the_root <- strsplit(selected_segment, '?', fixed = TRUE)
     the_root <- unlist(the_root)[1]
     if(!is.null(selected_segment)){
       ok <- TRUE
     }
-    if(ok){
+    # if(ok){
       the_url <- 
         paste0(
           # 'https://www.youtube.com/embed/',
           selected_segment
         )
-      the_url <- paste0(the_url, '&amp;autoplay=1&amp;loop=1',
-                        '&amp;playlist=', the_root,
-                        '&amp;rel=0')
+      # the_url <- paste0(the_url, '&amp;autoplay=1&amp;loop=1',
+      #                   '&amp;playlist=', the_root,
+      #                   '&amp;rel=0')
       message('The url is ', the_url)
-      make_youtube(the_url)
-    } else {
-      NULL
-    }
+      embed_youtube(the_url)
+    # } else {
+    #   NULL
+    # }
   })
   
   output$ui_video <- renderUI({

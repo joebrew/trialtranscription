@@ -4,10 +4,13 @@ time_label <- function(df){
   end <- df$end_time
   
   start_minutes <- floor(start / 60)
-  start_hours <- floor(start_minutes / 60)
+  start_hours <- start_minutes %/% 60
+  start_minutes <- start_minutes %% 60
   
   end_minutes <- floor(end / 60)
-  end_hours <- floor(end_minutes / 60)
+  end_hours <- end_minutes %/% 60
+  end_minutes <- end_minutes %% 60
+  
   
   start_time <- paste0(start_hours, ':', start_minutes, ':00')
   end_time <- paste0(end_hours, ':', end_minutes, ':00')
