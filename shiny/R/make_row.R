@@ -1,11 +1,11 @@
 # Generate a row with a who and a what
 make_row <- function(n = 1){
   fluidRow(
-    column(4, align = 'center',
+    column(5, align = 'center',
            textInput(paste0('who', n),
                      label = 'Quien',
                      placeholder = 'Quien habla?')),
-    column(8,
+    column(7,
            align = 'center',
            textAreaInput(paste0('que', n),
                            label = 'Qué dice?',
@@ -14,6 +14,9 @@ make_row <- function(n = 1){
 }
 
 make_row_text <- function(n = 1, who = NULL, what = NULL, people = NULL){
+  if(n == 0){
+    NULL
+  }
   peeps <- as.character(people)
   np <- names(people)
   out <- paste0("c(", paste0("'",np, "' = '", people, "'", collapse = ','), ")")
@@ -25,14 +28,14 @@ make_row_text <- function(n = 1, who = NULL, what = NULL, people = NULL){
     }
   }
   if(who_ok){
+    message('who ok')
     who_part <- paste0("selected = '", who, "'")
     options_part <- ''
   } else {
+    'who not ok'
     who_part <-  ''
-    options_part <- "create = TRUE, placeholder = 'Selecciona o escribe el nombre de la persona'"
+    options_part <- "create = TRUE, placeholder = 'Selecciona o escribe el nombre de la persona', "
   }
-  
-  
   
   if(!is.null(what)){
     if(!is.na(what)){
@@ -50,11 +53,11 @@ make_row_text <- function(n = 1, who = NULL, what = NULL, people = NULL){
           div(id = 'expr-container',
            selectizeInput(paste0('who', ", n, "),
                      label = NULL,
-                    options = list(", options_part, ",
+                    options = list(", options_part, "
                               render = I(
                                 \"{
                                   option: function(item, escape) {
-                                    return '<div><img src=\\\"people/' + item.value + '\\\" width = 40 />' + escape(item.label) + '</div>'
+                                    return '<div><img src=\\\"people/' + item.value + '\\\" width = 50 />' + escape(item.label) + '</div>'
                                   }
                                 }\")
                         ),
@@ -69,6 +72,9 @@ make_row_text <- function(n = 1, who = NULL, what = NULL, people = NULL){
 }
 
 make_rows <- function(n, who = NULL, what = NULL, people = NULL){
+  if(n == 0){
+    NULL
+  }
   out_list <- list()
   for(i in 1:n){
     out_list[[i]] <- make_row_text(n = i, 

@@ -1,4 +1,4 @@
-local <- TRUE
+local <- FALSE
 library(shiny)
 library(DT)
 library(shinydashboard)

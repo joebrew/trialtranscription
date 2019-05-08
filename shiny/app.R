@@ -200,12 +200,19 @@ server <- function(input, output,session) {
 
     # Create a dynamic ui for adding and removing transcriptions
     output$dynamic <- renderUI({
-      message('people is ')
-      print(people)
+
 
       # Trigger any changes from input$segment and input$quiero
       is <- input$segment
       iq <- input$quiero
+      
+      the_text <-   fluidRow(
+        column(5, align = 'center',
+               h3('Quién habla?')),
+        column(7,
+               align = 'center',
+               h3('Qué dice?'))
+      )
 
       # If in revise mode, get previous stuff
       if(iq == 'Revisar'){
@@ -234,9 +241,11 @@ server <- function(input, output,session) {
         # If not in revise mode, just set stuff to default
         nn <- the_number()
         df <- data$current
+
         the_rows <- eval(parse(text = make_rows(n = nn,  who = df$who, what = df$what, people = people)))
         pm <- plus_minus(n = nn)
-        out <- fluidPage(the_rows,
+        out <- fluidPage(the_text,
+                         the_rows,
                          pm)
       }
       return(out)
@@ -489,13 +498,15 @@ server <- function(input, output,session) {
     data$current <- df
     the_time <- Sys.time()
     the_comment <- input$comment
+    is_revision <- input$quiero == 'Revisar'
     new_row <- tibble(chunk_url = the_url,
                       number = 1:nrow(df),
                       user = the_user,
                       speaker = df$who,
                       transcription = df$what,
                       created_at = the_time,
-                      comment = the_comment)
+                      comment = the_comment,
+                      revision = is_revision)
     # Update the reactive previous transcription (not done)
     
     # Update the database
