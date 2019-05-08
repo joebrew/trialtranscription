@@ -8,6 +8,6 @@ plus_minus <- function(n = 1){
   } else {
     fluidRow(column(12,
                     align = 'center',
-                    actionButton("plus1", "Si otra persona habla, clic aquí para añadir otra fila",icon=icon("plus-circle"))))
+                    actionButton("plus1", "Si otra persona habla también, haz clic aquí para añadir otra fila",icon=icon("plus-circle"))))
   }
 }
