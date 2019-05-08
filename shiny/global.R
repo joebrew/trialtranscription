@@ -1,4 +1,4 @@
-local <- FALSE
+local <- TRUE
 library(shiny)
 library(DT)
 library(shinydashboard)
@@ -31,3 +31,66 @@ co <- credentials_connect(options_list = credentials)
 users <- get_data(query = 'SELECT * FROM users', connection_object = co)
 transcriptions <- get_data(query = 'SELECT * FROM transcriptions', connection_object = co)
 chunks <- get_data(query = 'SELECT * FROM chunks', connection_object = co)
+
+# Custom css for images in dropdown
+css <- 
+  "
+a#more-apps-by-dean {
+display: none;
+}
+body {
+background: #fff;
+}
+.container {
+margin: 0;
+padding: 10px;
+}
+.green {
+background: green;
+}
+#expr-container .selectize-input {
+font-size: 18px;
+line-height: 18px;
+text-align: left;
+}
+#expr-container .selectize-dropdown {
+font-size: 14px;
+line-height: 20px;
+text-align: left;
+}
+#expr-container .selectize-dropdown-content {
+max-height: 225px;
+padding: 0;
+text-align: left;
+}
+#expr-container .selectize-dropdown-content .option {
+border-bottom: 1px dotted #ccc;
+text-align: left;
+}
+#submitExpr {
+font-weight: bold;
+font-size: 12px;
+padding: 5px 20px;
+text-align: left;
+}
+#helpText {
+font-size: 18px;
+}
+#btn {
+font-size: 20px;
+}
+"
+
+# Define people for images and dropdowns
+people <- images <- dir('www/people')
+people <- strsplit(people, split = '.', fixed = TRUE)
+people <- unlist(lapply(people, function(x){x[1]}))
+# people <- people[people != 'unknown']
+# names(people) <- images
+final <- images; names(final) <- people; people <- final
+# Arrange
+people <- sort(people)
+peoplea <- people[names(people) %in% c('Testigo', 'No sé o no aparece en la llista')]
+peoplea <- rev(peoplea)
+peopleb <- people[!names(people) %in% names(peoplea)]
+people <- c(peoplea, peopleb)

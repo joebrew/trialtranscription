@@ -13,9 +13,11 @@ make_row <- function(n = 1){
   )
 }
 
-make_row_text <- function(n = 1, who = NULL, what = NULL){
-  people <- c('Van den Eynde', 'Marchena')
-  people <- paste0("c(", paste0("'",people, "'", collapse = ','), ")")
+make_row_text <- function(n = 1, who = NULL, what = NULL, people = NULL){
+  peeps <- as.character(people)
+  np <- names(people)
+  out <- paste0("c(", paste0("'",np, "' = '", people, "'", collapse = ','), ")")
+  people <- out
   who_ok <- what_ok <- FALSE
   if(!is.null(who)){
     if(!is.na(who)){
@@ -24,9 +26,13 @@ make_row_text <- function(n = 1, who = NULL, what = NULL){
   }
   if(who_ok){
     who_part <- paste0("selected = '", who, "'")
+    options_part <- ''
   } else {
-    who_part <-  "options = list(create = TRUE, placeholder = 'Selecciona o escribe el nombre de la persona')"
+    who_part <-  ''
+    options_part <- "create = TRUE, placeholder = 'Selecciona o escribe el nombre de la persona'"
   }
+  
+  
   
   if(!is.null(what)){
     if(!is.na(what)){
@@ -41,10 +47,19 @@ make_row_text <- function(n = 1, who = NULL, what = NULL){
   
   paste0("fluidRow(
     column(4, align = 'center',
+          div(id = 'expr-container',
            selectizeInput(paste0('who', ", n, "),
                      label = NULL,
+                    options = list(", options_part, ",
+                              render = I(
+                                \"{
+                                  option: function(item, escape) {
+                                    return '<div><img src=\\\"people/' + item.value + '\\\" width = 40 />' + escape(item.label) + '</div>'
+                                  }
+                                }\")
+                        ),
                      ", who_part, ",
-                      choices = ",people, ")),
+                      choices = ",people, "))),
     column(8,
            align = 'center',
            textAreaInput(paste0('what', ", n, "),
@@ -53,12 +68,13 @@ make_row_text <- function(n = 1, who = NULL, what = NULL){
   )")
 }
 
-make_rows <- function(n, who = NULL, what = NULL){
+make_rows <- function(n, who = NULL, what = NULL, people = NULL){
   out_list <- list()
   for(i in 1:n){
     out_list[[i]] <- make_row_text(n = i, 
                                    who = who[i],
-                                   what = what[i])
+                                   what = what[i],
+                                   people = people)
   }
   out <- paste0(out_list, collapse = ',\n')
   out <- paste0('fluidPage(', 

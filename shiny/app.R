@@ -16,11 +16,13 @@ header <- dashboardHeader(title="Transcripción del juicio",
                                   tags$li(class = 'dropdown',
                                           uiOutput('log_out_ui'))))
 sidebar <- dashboardSidebar(
-
   sidebarMenuOutput("menu")
 )
 
 body <- dashboardBody(
+  shinyjs::useShinyjs(),
+  # Custom css for dropdown images
+  tags$style(css),
   tags$head(
     tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
   ),
@@ -198,6 +200,8 @@ server <- function(input, output,session) {
 
     # Create a dynamic ui for adding and removing transcriptions
     output$dynamic <- renderUI({
+      message('people is ')
+      print(people)
 
       # Trigger any changes from input$segment and input$quiero
       is <- input$segment
@@ -221,7 +225,7 @@ server <- function(input, output,session) {
         }
         nn <- the_number()
 
-        the_rows <- eval(parse(text = make_rows(n = nn, who = df$who, what = df$what)))
+        the_rows <- eval(parse(text = make_rows(n = nn, who = df$who, what = df$what, people = people)))
         pm <- plus_minus(n = nn)
         out <- fluidPage(the_rows,
                          pm)
@@ -230,7 +234,7 @@ server <- function(input, output,session) {
         # If not in revise mode, just set stuff to default
         nn <- the_number()
         df <- data$current
-        the_rows <- eval(parse(text = make_rows(n = nn,  who = df$who, what = df$what)))
+        the_rows <- eval(parse(text = make_rows(n = nn,  who = df$who, what = df$what, people = people)))
         pm <- plus_minus(n = nn)
         out <- fluidPage(the_rows,
                          pm)
@@ -585,7 +589,6 @@ server <- function(input, output,session) {
       } else {
         if(length(done_choices) > 0){
           ht <- 'Selecciona, a la izquierda, uno de los segmentos ya transcritos y somete, si hace falta, correcciones a la derecha. Si no hace falta ninguna corrección, somete la transcripción tal cual.' 
-          selected_id <- input$segment
           ab <- actionButton('submit',
                              label = 'Somete la corrección',
                              style='font-size:150%')
@@ -630,33 +633,23 @@ server <- function(input, output,session) {
 
   
   # video for watching
-  output$video <- renderUI({
+  output$player <- renderUI({
     ok <- FALSE
     selected_segment <- input$segment
     message('The selected_segment is ', selected_segment)
-    the_root <- strsplit(selected_segment, '?', fixed = TRUE)
-    the_root <- unlist(the_root)[1]
     if(!is.null(selected_segment)){
       ok <- TRUE
     }
-    # if(ok){
       the_url <- 
         paste0(
-          # 'https://www.youtube.com/embed/',
           selected_segment
         )
-      # the_url <- paste0(the_url, '&amp;autoplay=1&amp;loop=1',
-      #                   '&amp;playlist=', the_root,
-      #                   '&amp;rel=0')
       message('The url is ', the_url)
       embed_youtube(the_url)
-    # } else {
-    #   NULL
-    # }
   })
   
   output$ui_video <- renderUI({
-    htmlOutput('video')
+    htmlOutput('player')
   })
   
   output$ui_main_page <- renderUI({
