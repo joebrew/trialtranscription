@@ -9,6 +9,12 @@ library(htmltools)
 library(vembedr)
 library(RPostgreSQL)
 library(tidyverse)
+library(yaml)
+library(shinyCAPTCHA)
+
+
+# Get captcha info
+captcha <- yaml::yaml.load_file('captcha_credentials.yaml')
 
 # Source files
 source_files <- dir('R')

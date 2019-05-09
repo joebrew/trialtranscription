@@ -26,6 +26,8 @@ body <- dashboardBody(
   tags$head(
     tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
   ),
+  
+  
   tabItems(
     tabItem(
       tabName = 'transcribir',
@@ -73,17 +75,28 @@ ui <- dashboardPage(header, sidebar, body, skin="blue")
 # Server
 server <- function(input, output,session) {
   
+  # Captcha
+  result <- callModule(recaptcha, "test", secret = captcha$secret_key)
+  output$humans_only <- renderUI({
+    req(result()$success)
+    checkboxInput("deacuerdo", "Seguir navegando")
+  })
+  
   
   vals <- reactiveValues(data = NULL)
   
   # Return the UI for a modal dialog with data selection input. If 'failed' is
   # TRUE, then display a message that the previous value was invalid.
   dataModal <- function(failed = FALSE) {
+    
     modalDialog(
       title = "Información sobre privacidad, cookies, y datos",
       span("Este web utilitza cookies propios i de terceros para mejorar su experiencia durante la navegación. En navegar este web, acepta el uso que nosotros hacemos de ellos. La configuración de los cookies puede cambiar en cualquier momento."),
       span("Para crear una cuenta en esta aplicación, hace falta una dirrección de correo electrónico (email). No daremos nunca su email a otros partidos. Tampoco le escribiremos nunca con fines lucrativos. Pero en crear una cuenta, acepta que le podemos enviar correos relacionados con este proyecto."),
-      checkboxInput("deacuerdo", "Seguir navegando"),
+      recaptcha_ui("test", sitekey = captcha$site_key),
+      # recaptchaUI("test", sitekey = captcha$site_key),
+      
+      uiOutput('humans_only'),
       
       if (failed)
         div(tags$b("Invalid name of data object", style = "color: red;")),
@@ -666,6 +679,7 @@ server <- function(input, output,session) {
   output$ui_main_page <- renderUI({
     lit <- log_in_text()
     sc <- show_cambiar()
+    
     
     # Make the cambiar contraseña row
     if(sc){
