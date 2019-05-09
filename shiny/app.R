@@ -9,8 +9,14 @@ library(vembedr) # https://ijlyttle.github.io/vembedr/
 source('global.R')
 header <- dashboardHeader(title="Transcripción del juicio",
                           tags$li(class = 'dropdown',  
-                                  tags$style(type='text/css', "#log_out {margin-right: 10px; margin-left: 10px; font-size:80%; margin-top: 10px; margin-bottom: -10px;}"),
-                                  tags$style(type='text/css', "#quiero {margin-right: 20px; margin-left: 10px; font-size:80%; margin-top: 5px; margin-bottom: -15px;}"),
+                                  tags$style(type='text/css', "#language_ui {margin-right: 10px; margin-left: 10px; font-size:80%; margin-top: 10px; margin-bottom: -12px;}"),
+                                  tags$style(type='text/css', "#email_ui {margin-right: 10px; margin-left: 10px; font-size:80%; margin-top: 10px; margin-bottom: -12px;}"),
+                                  tags$style(type='text/css', "#log_out_ui {margin-right: 10px; margin-left: 10px; font-size:80%; margin-top: 10px; margin-bottom: -10px;}"),
+                                  tags$style(type='text/css', "#quiero_ui {margin-right: 20px; margin-left: 10px; font-size:80%; margin-top: 5px; margin-bottom: -12x;}"),
+                                  tags$li(class = 'dropdown',
+                                          uiOutput('email_ui')),
+                                  tags$li(class = 'dropdown',
+                                          uiOutput('language_ui')),
                                   tags$li(class = 'dropdown',
                                           uiOutput('quiero_ui')),
                                   tags$li(class = 'dropdown',
@@ -27,34 +33,25 @@ body <- dashboardBody(
     tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
   ),
   
-  
-  tabItems(
-    tabItem(
-      tabName = 'transcribir',
-      uiOutput('ui_transcribir')
-    ),
-    tabItem(
-      tabName = 'log_in',
-      uiOutput('ui_main_page')
-    ),
-    tabItem(
-      tabName = 'informacion',
-      fluidPage(
-        fluidRow(column(12, align = 'center',
-                        selectInput('language',
-                                    'Lengua / Language / Llengua',
-                                    choices = c('Español', 'Català', 'English')))),
-        uiOutput('ui_include'))
-    ),
-    tabItem(
-      tabName = 'privacidad',
-      fluidPage(
-        includeMarkdown('includes/privacidad.md')
+  fluidPage(
+    tabItems(
+      tabItem(
+        tabName = 'transcribir',
+        uiOutput('ui_transcribir')
+      ),
+      tabItem(
+        tabName = 'log_in',
+        uiOutput('ui_main_page')
+      ),
+      tabItem(
+        tabName = 'informacion',
+        fluidPage(
+          uiOutput('ui_include'))
       )
-    )
+    ),
+    uiOutput('ui_privacy')
   )
 )
-
 
 # Function for authenticating password
 user_exists <- function(user_name, 
@@ -75,39 +72,48 @@ ui <- dashboardPage(header, sidebar, body, skin="blue")
 # Server
 server <- function(input, output,session) {
   
+  
   # Captcha
   result <- callModule(recaptcha, "test", secret = captcha$secret_key)
   output$humans_only <- renderUI({
-    req(result()$success)
-    checkboxInput("deacuerdo", "Seguir navegando")
+    the_language <- language()
+    seguir_text <- ifelse(the_language == 'Español',
+                          'Seguir navegando',
+                          ifelse(the_language == 'Català',
+                                 'Seguir navegant',
+                                 'Keep navigating'))
+    # req(result()$success)
+    checkboxInput("deacuerdo", seguir_text)
   })
   
   
   vals <- reactiveValues(data = NULL)
+  language <- reactiveVal('Català')
   
-  # Return the UI for a modal dialog with data selection input. If 'failed' is
-  # TRUE, then display a message that the previous value was invalid.
-  dataModal <- function(failed = FALSE) {
-    
+  
+  # Osberve and update language
+  observeEvent(input$language,{
+    language(input$language)
+  })
+  # Osberve and update language
+  observeEvent(input$language2,{
+    language(input$language2)
+  })
+  
+  showModal(
     modalDialog(
-      title = "Información sobre privacidad, cookies, y datos",
-      span("Este web utilitza cookies propios i de terceros para mejorar su experiencia durante la navegación. En navegar este web, acepta el uso que nosotros hacemos de ellos. La configuración de los cookies puede cambiar en cualquier momento."),
-      span("Para crear una cuenta en esta aplicación, hace falta una dirrección de correo electrónico (email). No daremos nunca su email a otros partidos. Tampoco le escribiremos nunca con fines lucrativos. Pero en crear una cuenta, acepta que le podemos enviar correos relacionados con este proyecto."),
-      recaptcha_ui("test", sitekey = captcha$site_key),
-      # recaptchaUI("test", sitekey = captcha$site_key),
       
+      uiOutput('modal_ui'),
       uiOutput('humans_only'),
       
-      if (failed)
-        div(tags$b("Invalid name of data object", style = "color: red;")),
+      # div(tags$b("Invalid name of data object", style = "color: red;")),
       
       footer = tagList(
-        p( actionLink('mas_informacion', '(Más información)'), style = "font-size:70%")
+        p( a('Més informació | Más información | More information', href="http://trialtranscription.com/privacidad"), style = "font-size:70%")
       )
     )
-  }
-  
-  showModal(dataModal())
+    
+  )
   
   observeEvent(input$deacuerdo, {
     # Check that data object exists and is data frame.
@@ -214,6 +220,18 @@ server <- function(input, output,session) {
     # Create a dynamic ui for adding and removing transcriptions
     output$dynamic <- renderUI({
 
+      the_language <- language()
+
+      if(the_language == 'Español'){
+        who_text <- '¿Quién habla?'
+        what_text <- '¿Qué dice?'
+      } else if(the_language == 'Català'){
+        who_text <- 'Qui parla?'
+        what_text <- '¿Què diu?'
+      } else if(the_language == 'English'){
+        who_text <- 'Who is speaking?'
+        what_text <- 'What is (s)he saying?'
+      }
 
       # Trigger any changes from input$segment and input$quiero
       is <- input$segment
@@ -221,10 +239,10 @@ server <- function(input, output,session) {
       
       the_text <-   fluidRow(
         column(5, align = 'center',
-               h3('Quién habla?')),
+               h3(who_text)),
         column(7,
                align = 'center',
-               h3('Qué dice?'))
+               h3(what_text))
       )
 
       # If in revise mode, get previous stuff
@@ -246,7 +264,7 @@ server <- function(input, output,session) {
         nn <- the_number()
 
         the_rows <- eval(parse(text = make_rows(n = nn, who = df$who, what = df$what, people = people)))
-        pm <- plus_minus(n = nn)
+        pm <- plus_minus(n = nn, the_language = the_language)
         out <- fluidPage(the_rows,
                          pm)
 
@@ -256,7 +274,7 @@ server <- function(input, output,session) {
         df <- data$current
 
         the_rows <- eval(parse(text = make_rows(n = nn,  who = df$who, what = df$what, people = people)))
-        pm <- plus_minus(n = nn)
+        pm <- plus_minus(n = nn, the_language = the_language)
         out <- fluidPage(the_text,
                          the_rows,
                          pm)
@@ -383,51 +401,59 @@ server <- function(input, output,session) {
     log_in_text('')
   })
   
-  observeEvent(input$tabs,{
-    message('input$tabs is ', input$tabs)
-  })
-  observeEvent(input$mas_informacion, {
-    updateNavbarPage(session, 'tabs', selected = 'privacidad')
-    
-  })
+  # observeEvent(input$tabs,{
+  #   message('input$tabs is ', input$tabs)
+  # })
+  # observeEvent(input$mas_informacion, {
+  #   updateNavbarPage(session, 'tabs', selected = 'privacidad')
+  #   
+  # })
   
   # Side bar menu
   output$menu <-
     renderMenu({
+      
+      the_language <- language()
+      if(the_language == 'Español'){
+        entrar_text <- 'Entrar'
+        info_text <- 'Información'
+        transcribe_text <- "Transcribir"
+      } else if(the_language == 'Català'){
+        entrar_text <- 'Entrar'
+        info_text <- 'Informació'
+        transcribe_text <- "Transcribir"
+      } else if(the_language == 'English'){
+        entrar_text <- 'Log-in'
+        info_text <- 'Information'
+        transcribe_text <- "Transcribe"
+      }
+      
       # Logged in or not?
       li <- logged_in()
       if(!li){
         sidebarMenu(
           id = 'tabs',
           menuItem(
-            text = 'Log-in',
+            text = entrar_text,
             tabName = 'log_in',
             icon = icon('eye')
           ),
           menuItem(
-            text = 'Información',
+            text = info_text,
             tabName = 'informacion',
-            icon = icon("cog", lib = "glyphicon")),
-          menuItem(
-            text = 'Privacidad',
-            tabName = 'privacidad',
-            icon = icon("database", lib = "font-awesome")))
+            icon = icon("cog", lib = "glyphicon")))
         
       } else {
         sidebarMenu(
           id="tabs",
           menuItem(
-            text="Transcribir",
+            text= transcribe_text,
             tabName="transcribir",
             icon=icon("eye")),
           menuItem(
-            text = 'Información',
+            text = info_text,
             tabName = 'informacion',
-            icon = icon("cog", lib = "glyphicon")),
-          menuItem(
-            text = 'Privacidad',
-            tabName = 'privacidad',
-            icon = icon("database", lib = "font-awesome")))
+            icon = icon("cog", lib = "glyphicon")))
       }
     })
   
@@ -451,41 +477,42 @@ server <- function(input, output,session) {
   #   segment_reactive(new_is)
   # })
   
+  
   # Which language to include the info
   output$ui_include <- renderUI({
     message('Running output$ui_include')
     
     
-    language <- input$language
-    if(is.null(language)){
-      language <- 'Español'
+    the_language <- language()
+    if(is.null(the_language)){
+      the_language <- 'Español'
     }
     
-    if(language == 'Español'){
+    if(the_language == 'Español'){
       include_file <- "includes/include_es.md"
-    } else if(language == 'English'){
+    } else if(the_language == 'English'){
       include_file <- "includes/include_en.md"
-    } else if(language == 'Català'){
+    } else if(the_language == 'Català'){
       include_file <- "includes/include_ca.md"
     }
     
     fluidPage(
       fluidRow(
         includeMarkdown(include_file)
-      ),
-      fluidRow(
-        div(img(src='logo_clear.png', align = "center"), style="text-align: center;"),
-        h4('A pro bono project of ',
-           a(href = 'http://databrew.cc',
-             target='_blank', 'Databrew'),
-           align = 'center'),
-        p('Empowering research and analysis through collaborative data science for social good.', align = 'center'),
-        div(a(actionButton(inputId = "email", label = "info@databrew.cc", 
-                           icon = icon("envelope", lib = "font-awesome")),
-              href="mailto:info@databrew.cc",
-              align = 'center')), 
-        style = 'text-align:center;'
-      )
+      )#,
+      # fluidRow(
+      #   div(img(src='logo_clear.png', align = "center"), style="text-align: center;"),
+      #   h4('A pro bono project of ',
+      #      a(href = 'http://databrew.cc',
+      #        target='_blank', 'Databrew'),
+      #      align = 'center'),
+      #   p('Empowering research and analysis through collaborative data science for social good.', align = 'center'),
+      #   div(a(actionButton(inputId = "email", label = "info@databrew.cc", 
+      #                      icon = icon("envelope", lib = "font-awesome")),
+      #         href="mailto:info@databrew.cc",
+      #         align = 'center')), 
+      #   style = 'text-align:center;'
+      # )
     )
   })
   
@@ -585,6 +612,29 @@ server <- function(input, output,session) {
   
   # Transcription page
   output$ui_transcribir <- renderUI({
+    
+    the_language <- language()
+    placeholder_text <- 'COMENTARIOS DEL TRANSCIPTOR. Por ejemplo, "no se escucha bien lo que dice en el segundo 32", o "no hablan durante este minuto del juico", etc. Deja en blanco si no tienes comentarios.'
+    if(the_language == 'Español'){
+      htt <- 'Selecciona, a la izquierda, uno de los segmentos que todavía no se ha transcrito, y transcríbelo a la derecha.'
+      htr <- 'Selecciona, a la izquierda, uno de los segmentos ya transcritos y somete, si hace falta, correcciones a la derecha. Si no hace falta ninguna corrección, somete la transcripción tal cual.'
+      label1 <- 'Selecciona un minuto del juicio'
+      label2 <- 'Somete la transcripción'
+      ht3 <- 'No hay segmentos por revisar. Seleccione "Transcribir" para transcribir un segmento nuevo.'
+    } else if (the_language == 'Català'){
+      htt <- 'Selecciona, a l\'esquerra, un dels segments que encara no s\'ha transcrit, i transcriu-lo a la dreta.'
+      htr <- 'Selecciona, a l\'esquerra, un dels segments ja transcrits i somet, si cal, correccions a la dreta. Si no cal correcions, somet tal com és.'
+      label1 <- 'Selecciona un minut del judici'
+      label2 <- 'Somet la transcripció'
+      ht3 <- 'No hi ha segments per revisar. Selecciona "Transcribir" per transcribir un segment nou.'
+    } else {
+      htt <- 'Select, on the left, one of the segments which has not yet been transcribed, and transcribe it on the right.'
+      htr <- 'Select, on the left, one of the already-transcribed segments and if necessary, submit corrections. If there are no corrections, submit as is.'
+      label1 <- 'Select one minute of the trial'
+      label2 <- 'Submit the transcription'
+      ht3 <- 'There are no segments to review. Select "Transcribe" to transcribe a new segment.'
+    }
+    
     message('Running output$ui_transcribir')
     ab <- NULL
     comment <- NULL
@@ -600,35 +650,35 @@ server <- function(input, output,session) {
     } else {
       if(input_quiero == 'Transcribir'){
         quiero_reactive('Transcribir')
-        ht <- 'Selecciona, a la izquierda, uno de los segmentos que todavía no se ha transcrito, y transcríbelo a la derecha.'
+        ht <- htt
         sr <- segment_reactive()
         segment_select <- selectInput('segment',
-                                      label = 'Selecciona un minuto del juicio',
+                                      label = label1,
                                       choices = new_choices,
                                       selected = sr)
         ab <- actionButton('submit',
-                           label = 'Somete la transcripción')
+                           label = label2)
         comment <- text_area_input('comment', label = NULL,
-                                   placeholder = 'COMENTARIOS DEL TRANSCIPTOR. Por ejemplo, "no se escucha bien lo que dice en el segundo 32", o "no hablan durante este minuto del juico", etc. Deja en blanco si no tienes comentarios.')
+                                   placeholder = placeholder_text)
       } else {
         if(length(done_choices) > 0){
-          ht <- 'Selecciona, a la izquierda, uno de los segmentos ya transcritos y somete, si hace falta, correcciones a la derecha. Si no hace falta ninguna corrección, somete la transcripción tal cual.' 
+          ht <- htr 
           ab <- actionButton('submit',
                              label = 'Somete la corrección',
                              style='font-size:150%')
           comment <- text_area_input('comment', label = NULL,
-                                     placeholder = 'COMENTARIOS DEL TRANSCIPTOR. Por ejemplo, "no se escucha bien lo que dice en el segundo 32", o "no hablan durante este minuto del juico", etc. Deja en blanco si no tienes comentarios.')
+                                     placeholder = placeholder_text)
           
           quiero_reactive('Revisar')
           sr <- segment_reactive()
           segment_select <- selectInput('segment',
-                                        label = 'Selecciona un minuto del juicio',
+                                        label = label1,
                                         choices = done_choices,
                                         selected = sr)
         } else {
           ab <- NULL
           comment <- NULL
-          ht <- 'No hay segmentos por revisar. Seleccione "Transcribir" para transcribir un segmento nuevo.' 
+          ht <- ht3 
           quiero_reactive('Revisar')
           segment_select <- NULL
         }
@@ -705,25 +755,50 @@ server <- function(input, output,session) {
     } else {
       scrow <- fluidRow()
     }
-    
+    the_language <- language()
+    if(the_language == 'Español'){
+      tengo_text <- 'Ya tengo una cuenta'
+      email_text <- 'Correo electrónico'
+      password_text <- 'Contraseña'
+      enter_text <- 'Entrar'
+      quiero_text <- 'Quiero crear una cuenta'
+      create_text <- 'Crear cuenta'
+      change_text <- 'Cambiar contraseña'
+    } else if (the_language == 'Català'){
+      tengo_text <- 'Ja tinc un compte'
+      email_text <- 'Correu electrònic'
+      password_text <- 'Contrasenya'
+      enter_text <- 'Entrar'
+      quiero_text <- 'Vull crear un compte'
+      create_text <- 'Crear compte'
+      change_text <- 'Canviar contrasenya'
+    } else {
+      tengo_text <- 'I already have an account'
+      email_text <- 'Email address'
+      password_text <- 'Password'
+      enter_text <- 'Enter'
+      quiero_text <- 'I want to create an account'
+      create_text <- 'Create account'
+      change_text <- 'Change password'
+    }
     fluidPage(
       fluidRow(
         column(6,
-               h2('Ya tengo una cuenta'),
+               h2(tengo_text),
                textInput('user_name',
-                         'Correo electrónico',
+                         email_text,
                          value = 'joe@databrew.cc'),
                passwordInput('password',
-                             'Contraseña',
+                             password_text,
                              value = 'password'),
-               actionButton('log_in', 'Entrar')
+               actionButton('log_in', enter_text)
         ),
         column(6,
-               h2('Quiero crear una cuenta'),
+               h2(quiero_text),
                textInput('user_name_crear',
-                         'Correo electrónico',
+                         email_text,
                          value = '')),
-        actionButton('crear_cuenta', 'Crear cuenta')
+        actionButton('crear_cuenta', create_text)
       ),
       fluidRow(
         column(12, align = 'center',
@@ -732,18 +807,49 @@ server <- function(input, output,session) {
       fluidRow(
         column(12, align = 'center',
                actionButton('show_cambiar_button',
-                            label = 'Cambiar contraseña'))
+                            label = change_text))
       ),
       scrow
     )
   })
   
+  output$email_ui <- renderUI({
+    the_language <- language()
+    if(the_language == 'Español'){
+      contact_text <- 'Contacto'
+    } else if(the_language == 'Català'){
+      contact_text <- 'Contacte'
+    } else if(the_language == 'English'){
+      contact_text <- 'Contact'
+    }
+    
+    
+    div(a(actionButton(inputId = "email", label = contact_text, 
+                       icon = icon("envelope", lib = "font-awesome")),
+          href="mailto:joe@databrew.cc",
+          align = 'center'))
+  })
+  
   output$quiero_ui <-renderUI({
+    
+    # Get language info
+    the_language <- language()
+    if(the_language == 'Español'){
+      choice_names <- c('Transcribir', 'Revisar')
+      iwant <- 'Quiero '
+    } else if(the_language == 'Català'){
+      choice_names <- c('Transcribir', 'Revisar')
+      iwant <- 'Vull '
+    } else {
+      choice_names <- c('Transcribe', 'Review')
+      iwant <- 'I want to '
+    }
     li <- logged_in()
     
     if(li){
       the_choices <- c('Transcribir', 'Revisar')
-      names(the_choices) <- paste0('Quiero ', the_choices)
+      names(the_choices) <- choice_names
+      names(the_choices) <- paste0(iwant, the_choices)
       tags$li(class = 'dropdown',
               radioButtons('quiero',
                            label = '',
@@ -756,19 +862,82 @@ server <- function(input, output,session) {
     }
   })
   
+  output$language_ui <- renderUI({
+    tags$li(class = 'dropdown',
+            selectInput('language',
+                         label = NULL,
+                         choices = c( 'Català', 'Español', 'English'),
+                         selected = 'Català',
+                        width = '150px'))
+  })
+  
   
   output$log_out_ui <- renderUI({
+    
+    the_language <- language()
+    if(the_language == 'Español'){
+      log_out_text <- 'Salir'
+    } else if(the_language == 'Català'){
+      log_out_text <- 'Sortir'
+    } else {
+      log_out_text <- 'Log out'
+    }
+    
     li <- logged_in()
     
     if(li){
       tags$li(class = 'dropdown',
-              actionButton('log_out', label = 'Log out', icon = icon('times')))
+              actionButton('log_out', label = log_out_text, icon = icon('times')))
       
     } else {
       NULL
     }
   })
   
+  output$ui_privacy <- renderUI({
+    the_language <- language()
+    if(the_language == 'Español'){
+      privacy_text <- 'Privacidad'
+    } else if(the_language == 'Català'){
+      privacy_text <- 'Privacitat'
+    } else {
+      privacy_text <- 'Privacy'
+    }
+    tagList(a(privacy_text, href="http://trialtranscription.com/privacy"))
+  })
+  
+  output$modal_ui <- renderUI({
+    the_language <- language()
+    # if(is.null(the_language)){
+    #   the_language <- 'Català'
+    # }
+    
+    if(the_language == 'Español'){
+      title_text <- "Información sobre privacidad, cookies, y datos"
+      text1 <- "Este web utilitza cookies propios i de terceros para mejorar su experiencia durante la navegación. En navegar este web, acepta el uso que nosotros hacemos de ellos. La configuración de los cookies puede cambiar en cualquier momento."
+      text2 <- "Para crear una cuenta en esta aplicación, hace falta una dirrección de correo electrónico (email). No daremos nunca su email a otros partidos. Tampoco le escribiremos nunca con fines lucrativos. Pero en crear una cuenta, acepta que le podemos enviar correos relacionados con este proyecto."
+    } else if(the_language == 'Català'){
+      title_text <- "Informació sobre privacitat, cookies, i dades"
+      text1 <- "Aquest web utilitza cookies propis i de tercers per a millorar la seva experiència durant la navegació. En navegar aquest web, accepta l'ús que en fem. La configuració dels cookies es pot canviar en qualsevol moment."
+      text2 <- "Per a crear un compte en aquesta aplicació, cal una direcció do correu electrònic (email). No donarem mai el seu correu a altres. Tampoc li escriurem mai amb fins lucratius. Però en crear un compte, vostè accepta que li podem enviar correus relacionats amb aquest projecte."
+    } else {
+      title_text <- "Information about privacy, cookies, and data"
+      text1 <- "This website uses cookies (both first and third party) to improve your experience during navigation. By using this website, you accept that we use the data from these cookies. The configuration of the cookies can change at any moment."
+      text2 <- "To create an account with this application, you must proivde an email address. We will never give your email address to other parties. Nor will we ever write you with the purpose of making a profit. However, by creating an account, you accept that we can send you emails related to this project."
+    }
+    
+    tl <- the_language
+    fluidPage(
+      title = title_text,
+      selectInput('language2', label = NULL,
+                  c('Català', 'Español', 'English'),
+                  selected = tl),
+      
+      span(text1),br(),
+      span(text2),
+      recaptcha_ui("test", language = the_language, sitekey = captcha$site_key)
+    )
+  })
   
   session$onSessionEnded(function() {
     message('Session ended. Closing the connection pool.')
